@@ -6,7 +6,6 @@
         android:icon="@drawable/ic_dashboard"
         android:title="Dashboard" />
 
-    <!-- ADD THIS ITEM BLOCK -->
     <item
         android:id="@+id/nav_coaches"
         android:icon="@drawable/ic_coach"
@@ -15,17 +14,17 @@
     <item
         android:id="@+id/nav_sessions"
         android:icon="@drawable/ic_seance"
-        android:title="Sessions" />
+        android:title="Séances" />
 
     <item
         android:id="@+id/nav_reservations"
         android:icon="@drawable/ic_reservation"
-        android:title="Reservations" />
+        android:title="Réservations" />
 
+    <!-- MORE ITEM (opens bottom sheet or dialog) -->
     <item
-        android:id="@+id/nav_profile"
-        android:icon="@drawable/ic_profile"
-        android:title="Profile" />
+        android:id="@+id/nav_more"
+        android:icon="@drawable/ic_more"
+        android:title="plus" />
 
 </menu>
-    

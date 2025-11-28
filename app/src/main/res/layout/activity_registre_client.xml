@@ -19,19 +19,20 @@
             android:layout_height="98dp"
             android:layout_marginBottom="16dp"
             android:contentDescription="Logo"
-            android:src="@drawable/iconlogin" />
+            android:src="@drawable/logo" />
 
         <!-- Titre -->
 
         <!-- Nom -->
         <!-- Nom complet -->
         <TextView
-            android:layout_width="260dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
             android:paddingBottom="16dp"
-            android:text="    Créer un compte :"
-            android:textColor="#516EF3"
-            android:textSize="24sp"
+            android:text="Créer un compte "
+            android:textColor="#3B82F6"
+            android:textSize="22sp"
             android:textStyle="bold" />
 
         <EditText
@@ -91,14 +92,18 @@
 
 
         <!-- Bouton Créer compte -->
-        <Button
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnRegister"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            android:backgroundTint="#516EF3"
             android:text="Créer mon compte"
-            android:textColor="@android:color/white" />
+            android:textColor="@android:color/white"
+            android:layout_marginBottom="16dp"
+            android:padding="12dp"
+            android:gravity="center"
+            android:background="@drawable/gradient_color"
+            android:textAllCaps="false"/>/>
 
         <!-- OU Google Sign-In -->
         <TextView

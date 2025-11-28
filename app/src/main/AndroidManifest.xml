@@ -3,12 +3,13 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <application
+        android:name=".FitGymApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@drawable/iconlogin"
+        android:icon="@drawable/logo"
         android:label="@string/app_name"
-        android:roundIcon="@drawable/iconlogin"
+        android:roundIcon="@drawable/logo"
         android:supportsRtl="true"
         android:theme="@style/Theme.FitGym">
         <activity
@@ -28,7 +29,11 @@
         <activity android:name="com.example.fitgym.ui.client.auth.RegisterActivity" />
         <!-- Déclaration de LoginAdminActivity -->
         <activity android:name="com.example.fitgym.ui.admin.LoginAdminActivity" />
+        <activity android:name=".ui.client.CoachDetailFragment"/>
+
         <activity android:name="com.example.fitgym.ui.admin.MainActivityAdmin" />
+        <!-- Client -->
+        <activity android:name=".ui.client.MainActivityClient" />
     </application>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>

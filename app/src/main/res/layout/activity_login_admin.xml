@@ -10,38 +10,44 @@
 
     <ImageView
         android:id="@+id/logoImage"
-        android:layout_width="150dp"
-        android:layout_height="wrap_content"
+        android:layout_width="260dp"
+        android:layout_height="154dp"
         android:layout_marginBottom="16dp"
         android:contentDescription="Logo de l'application"
-        android:src="@drawable/iconlogin" />
-
+        android:src="@drawable/logo" />
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Login"
         android:textSize="16sp"
-        android:textColor="@color/black"
+        android:textColor="#3B82F6"
         android:layout_marginBottom="8dp"
-        android:textStyle="bold"/>
+        android:textStyle="bold"
+        />
+
     <EditText
         android:id="@+id/etLogin"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Votre Login"
+        android:hint="Email"
         android:inputType="textEmailAddress"
         android:padding="16dp"
+        android:background="@drawable/edittext_bordered"
+        android:fontFamily="serif"
         android:textSize="16sp"
-        android:layout_marginBottom="24dp"/>
+        android:layout_marginBottom="16dp" />
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Mot de Passe"
         android:textSize="16sp"
-        android:textColor="@color/black"
+        android:textColor="#3B82F6"
         android:layout_marginBottom="8dp"
-        android:textStyle="bold"/>
+        android:textStyle="bold"
+
+        />
+
     <EditText
         android:id="@+id/etPassword"
         android:layout_width="match_parent"
@@ -49,16 +55,27 @@
         android:hint="••••••"
         android:inputType="textPassword"
         android:padding="16dp"
+        android:background="@drawable/edittext_bordered"
         android:textSize="16sp"
-        android:layout_marginBottom="40dp"/>
+        android:layout_marginBottom="16dp"
+        android:drawableEnd="@drawable/ic_eye"
+        />
 
-    <Button
+
+
+    <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/btnSeConnecter"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Se connecter"
-        android:backgroundTint="#1976D2"
-        android:textColor="@android:color/white" />
+        android:textColor="@android:color/white"
+        android:layout_marginBottom="16dp"
+        android:padding="12dp"
+        android:gravity="center"
+        android:background="@drawable/gradient_color"
+        android:textAllCaps="false"/>
+
+
     <ProgressBar
         android:id="@+id/progressBar"
         style="?android:attr/progressBarStyleLarge"

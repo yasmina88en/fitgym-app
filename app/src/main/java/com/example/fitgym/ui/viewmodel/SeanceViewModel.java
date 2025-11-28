@@ -8,10 +8,9 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-
+import com.example.fitgym.data.db.FirebaseHelper;
 import com.example.fitgym.data.dao.DAOCoach;
 import com.example.fitgym.data.db.DatabaseHelper;
-import com.example.fitgym.data.db.FirebaseHelper;
 import com.example.fitgym.data.model.Categorie;
 import com.example.fitgym.data.model.Coach;
 import com.example.fitgym.data.model.Seance;

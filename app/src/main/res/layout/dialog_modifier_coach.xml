@@ -12,9 +12,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="24dp">
+        android:padding="16dp">
 
-        <!-- Scrollable content -->
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="0dp"
@@ -43,7 +42,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center"
-                    android:text="Modifier les informations ci-dessous pour le coach  :"
+                    android:text="Modifier les informations ci-dessous pour le coach :"
                     android:textColor="@color/nav_item_color"
                     android:textSize="14sp"
                     android:paddingBottom="16dp"/>
@@ -53,8 +52,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Nom complet *"
-                    style="@style/RoundedTextInputLayout"
-                    >
+                    style="@style/RoundedTextInputLayout">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/inputNomComplet"
@@ -63,28 +61,48 @@
                         android:inputType="textPersonName"/>
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <!-- Spécialités -->
-                <com.google.android.material.textfield.TextInputLayout
+                <!-- Bloc spécialités -->
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Spécialités (ex: Yoga, Pilates)"
-                    style="@style/RoundedTextInputLayout"
-                    >
+                    android:orientation="vertical"
+                    android:paddingTop="15dp"
+                    android:paddingBottom="15dp">
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/inputSpecialites"
+                    <com.google.android.material.textfield.TextInputLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="text"/>
-                </com.google.android.material.textfield.TextInputLayout>
+                        android:hint="Spécialités"
+                        style="@style/RoundedTextInputLayout">
+
+                        <MultiAutoCompleteTextView
+                            android:id="@+id/inputSpecialites"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:completionThreshold="1"
+                            android:dropDownHeight="400dp"
+                            android:ellipsize="none"
+                            android:inputType="text"
+                            android:scrollHorizontally="false"
+                            android:padding="12dp"
+                            />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.chip.ChipGroup
+                        android:id="@+id/chipGroupSpecialites"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:singleLine="false"
+                        app:chipSpacing="8dp"/>
+                </LinearLayout>
 
                 <!-- Biographie -->
                 <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Biographie *"
-                    style="@style/RoundedTextInputLayout"
-                    >
+                    style="@style/RoundedTextInputLayout">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/inputBiographie"
@@ -94,14 +112,11 @@
                         android:lines="4"/>
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <!-- URL de l'image -->
-
-
+                <!-- Choix image -->
                 <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    style="@style/RoundedTextInputLayout"
-                    >
+                    style="@style/RoundedTextInputLayout">
 
                     <Button
                         android:id="@+id/inputUrlImage"
@@ -113,8 +128,8 @@
                         android:textColorHint="@color/white"
                         app:backgroundTint="@color/purple_500"
                         android:hint="Cliquez pour choisir une image"/>
-
                 </com.google.android.material.textfield.TextInputLayout>
+
                 <ImageView
                     android:id="@+id/imagePreview1"
                     android:layout_width="150dp"
@@ -124,12 +139,11 @@
                     android:scaleType="centerCrop"
                     android:src="@drawable/ic_placeholder"
                     android:contentDescription="Aperçu de l'image"
-                    android:background="@drawable/bg_photo_imageview" />
-
+                    android:background="@drawable/bg_photo_imageview"/>
             </LinearLayout>
         </ScrollView>
 
-        <!-- Boutons alignés à droite -->
+        <!-- Boutons -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -143,10 +157,9 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
                 android:layout_marginEnd="25dp"
-                android:layout_marginRight="90dp"
                 android:text="Annuler"
                 android:textColor="@color/nav_item_color"
-                app:backgroundTint="@color/chip_background" />
+                app:backgroundTint="@color/chip_background"/>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnModifier"
@@ -155,8 +168,7 @@
                 android:layout_marginStart="12dp"
                 android:text="Modifier"
                 android:textColor="@android:color/white"
-                app:backgroundTint="@color/purple_500" />
+                app:backgroundTint="@color/purple_500"/>
         </LinearLayout>
-
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

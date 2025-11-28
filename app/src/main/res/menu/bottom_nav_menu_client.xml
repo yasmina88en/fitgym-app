@@ -1,0 +1,28 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/nav_home"
+        android:icon="@drawable/ic_dashboard"
+        android:title="Dashboard"/>
+
+    <item
+        android:id="@+id/nav_coaches"
+        android:icon="@drawable/ic_coach"
+        android:title="Coachs"/>
+
+    <item
+        android:id="@+id/nav_sessions"
+        android:icon="@drawable/ic_seance"
+        android:title="Séances"/>
+
+    <item
+        android:id="@+id/nav_bookings"
+        android:icon="@drawable/ic_reservation"
+        android:title="Réservations"/>
+
+    <item
+        android:id="@+id/nav_more"
+        android:icon="@drawable/ic_more"
+        android:title="Plus"/>
+
+</menu>

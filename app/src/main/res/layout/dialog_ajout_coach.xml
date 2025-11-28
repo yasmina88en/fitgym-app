@@ -63,20 +63,43 @@
                         android:inputType="textPersonName"/>
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <!-- Spécialités -->
-                <com.google.android.material.textfield.TextInputLayout
+                <!-- Spécialités AUTOCOMPLETE -->
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Spécialités (ex: Yoga, Pilates)"
-                    style="@style/RoundedTextInputLayout"
-                    >
+                    android:orientation="vertical"
+                    android:paddingTop="15dp"
+                    android:paddingBottom="15dp">
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/inputSpecialites"
+                    <com.google.android.material.textfield.TextInputLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="text"/>
-                </com.google.android.material.textfield.TextInputLayout>
+                        android:hint="Spécialités"
+                        style="@style/RoundedTextInputLayout">
+
+                        <MultiAutoCompleteTextView
+                            android:id="@+id/inputSpecialites"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:completionThreshold="1"
+                            android:dropDownHeight="400dp"
+                            android:ellipsize="none"
+                            android:inputType="text"
+                            android:scrollHorizontally="false"
+                            android:padding="12dp"
+                            />
+                    </com.google.android.material.textfield.TextInputLayout>
+                    <!-- ChipGroup -->
+                    <com.google.android.material.chip.ChipGroup
+                        android:id="@+id/chipGroupSpecialites"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:singleLine="false"
+                        app:chipSpacing="8dp" />
+
+                </LinearLayout>
+
 
                 <!-- Biographie -->
                 <com.google.android.material.textfield.TextInputLayout

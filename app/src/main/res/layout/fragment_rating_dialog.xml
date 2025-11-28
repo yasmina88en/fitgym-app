@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/white">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@android:color/white">
+
+        <!-- HEADER AVEC GRADIENT (Correctement implémenté) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/gradient_header"
+            android:padding="20dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="⭐ Noter ce coach"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/white" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Partagez votre expérience et aidez la communauté"
+                android:textSize="12sp"
+                android:textColor="@android:color/white"
+                android:alpha="0.85"
+                android:layout_marginTop="4dp" />
+        </LinearLayout>
+
+        <!-- CONTENEUR PRINCIPAL (Padding et marges correctes) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <!-- SECTION ÉTOILES -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="24dp"
+                android:padding="16dp"
+                android:background="@drawable/card_background"
+                android:elevation="2dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Votre notation"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="#1F2937"
+                    android:layout_marginBottom="16dp" />
+
+                <!-- ÉTOILES INTERACTIVES -->
+                <LinearLayout
+                    android:id="@+id/starsContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_horizontal"
+                    android:layout_marginBottom="16dp" />
+
+                <!-- TEXTE DE NOTATION -->
+                <TextView
+                    android:id="@+id/ratingText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Cliquez sur une étoile pour noter"
+                    android:textSize="13sp"
+                    android:textColor="#6B7280"
+                    android:textStyle="bold"
+                    android:gravity="center" />
+            </LinearLayout>
+
+            <!-- SECTION COMMENTAIRE -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="24dp"
+                android:padding="16dp"
+                android:background="@drawable/card_background"
+                android:elevation="2dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Votre avis"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="#1F2937"
+                    android:layout_marginBottom="12dp" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Partagez votre expérience avec ce coach..."
+                    app:boxBackgroundColor="#F9FAFB"
+                    app:boxCornerRadiusBottomEnd="12dp"
+                    app:boxCornerRadiusBottomStart="12dp"
+                    app:boxCornerRadiusTopEnd="12dp"
+                    app:boxCornerRadiusTopStart="12dp"
+                    app:boxStrokeColor="#E5E7EB"
+                    app:boxStrokeWidth="1dp"
+                    app:counterEnabled="true"
+                    app:counterMaxLength="500"
+                    app:hintTextColor="#6B7280">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/commentaireInput"
+                        android:layout_width="match_parent"
+                        android:layout_height="100dp"
+                        android:textSize="13sp"
+                        android:padding="12dp"
+                        android:gravity="top|start"
+                        android:inputType="textMultiLine"
+                        android:textColor="#1F2937"
+                        android:maxLength="500" />
+                </com.google.android.material.textfield.TextInputLayout>
+            </LinearLayout>
+
+            <!-- BOUTONS D'ACTION (MODERNES) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="end"
+                android:layout_marginTop="8dp">
+
+                <!-- BOUTON ANNULER (OUTLINE) -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnAnnuler"
+                    android:layout_width="wrap_content"
+                    android:layout_height="48dp"
+                    android:text="Annuler"
+                    android:textAllCaps="false"
+                    android:textSize="13sp"
+                    android:textColor="#6B7280"
+                    android:layout_marginEnd="12dp"
+                    android:paddingStart="24dp"
+                    android:paddingEnd="24dp"
+                    app:cornerRadius="12dp"
+                    app:strokeColor="#E5E7EB"
+                    app:strokeWidth="2dp"
+                    app:backgroundTint="@android:color/white" />
+
+                <!-- BOUTON ENVOYER (FILLED) -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnEnvoyer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="48dp"
+                    android:text="Envoyer mon avis"
+                    android:textAllCaps="false"
+                    android:textSize="13sp"
+                    android:textColor="@android:color/white"
+                    android:textStyle="bold"
+                    android:paddingStart="24dp"
+                    android:paddingEnd="24dp"
+                    app:cornerRadius="12dp"
+                    app:backgroundTint="#7C3AED"
+                    app:elevation="4dp" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</ScrollView>

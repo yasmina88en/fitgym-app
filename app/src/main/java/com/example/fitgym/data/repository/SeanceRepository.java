@@ -1,12 +1,11 @@
 package com.example.fitgym.data.repository;
 
 import android.content.Context;
-
+import com.example.fitgym.data.db.FirebaseHelper;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.example.fitgym.data.dao.DAOSeance;
-import com.example.fitgym.data.db.FirebaseHelper;
 import com.example.fitgym.data.model.Seance;
 
 import java.util.List;

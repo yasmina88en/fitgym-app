@@ -13,7 +13,7 @@ import java.util.List;
 
 public class DAOClient {
 
-    private static SQLiteDatabase db;
+    private SQLiteDatabase db;
     private DatabaseHelper dbHelper;
 
     public DAOClient(Context context) {
@@ -36,14 +36,17 @@ public class DAOClient {
     public long ajouterClient(Client client) {
         open();
         ContentValues values = new ContentValues();
+        values.put("id", client.getId());
         values.put("nom", client.getNom());
         values.put("email", client.getEmail());
         values.put("motDePasse", client.getMotDePasse());
         values.put("telephone", client.getTelephone());
+        values.put("synced", client.isSynced() ? 1 : 0);
+        values.put("googleSignIn", client.isGoogleSignIn() ? 1 : 0);
 
-        long id = db.insert("Client", null, values);
+        long rowId = db.insert("Client", null, values);
         close();
-        return id;
+        return rowId;
     }
 
     // ------------------------------
@@ -56,12 +59,7 @@ public class DAOClient {
         Cursor cursor = db.rawQuery("SELECT * FROM Client WHERE email = ?", new String[]{email});
 
         if (cursor.moveToFirst()) {
-            client = new Client();
-            client.setId(String.valueOf(cursor.getInt(cursor.getColumnIndexOrThrow("id"))));
-            client.setNom(cursor.getString(cursor.getColumnIndexOrThrow("nom")));
-            client.setEmail(cursor.getString(cursor.getColumnIndexOrThrow("email")));
-            client.setMotDePasse(cursor.getString(cursor.getColumnIndexOrThrow("motDePasse")));
-            client.setTelephone(cursor.getString(cursor.getColumnIndexOrThrow("telephone")));
+            client = extractClientFromCursor(cursor);
         }
 
         cursor.close();
@@ -72,19 +70,14 @@ public class DAOClient {
     // ------------------------------
     //    OBTENIR CLIENT PAR ID
     // ------------------------------
-    public Client obtenirClientParId(int id) {
+    public Client obtenirClientParId(String id) {
         open();
         Client client = null;
 
-        Cursor cursor = db.rawQuery("SELECT * FROM Client WHERE id = ?", new String[]{String.valueOf(id)});
+        Cursor cursor = db.rawQuery("SELECT * FROM Client WHERE id = ?", new String[]{id});
 
         if (cursor.moveToFirst()) {
-            client = new Client();
-            client.setId(String.valueOf(cursor.getInt(cursor.getColumnIndexOrThrow("id"))));
-            client.setNom(cursor.getString(cursor.getColumnIndexOrThrow("nom")));
-            client.setEmail(cursor.getString(cursor.getColumnIndexOrThrow("email")));
-            client.setMotDePasse(cursor.getString(cursor.getColumnIndexOrThrow("motDePasse")));
-            client.setTelephone(cursor.getString(cursor.getColumnIndexOrThrow("telephone")));
+            client = extractClientFromCursor(cursor);
         }
 
         cursor.close();
@@ -95,7 +88,7 @@ public class DAOClient {
     // ------------------------------
     //    LISTER TOUS LES CLIENTS
     // ------------------------------
-    public  List<Client> listerClients() {
+    public List<Client> listerClients() {
         open();
         List<Client> liste = new ArrayList<>();
 
@@ -103,15 +96,8 @@ public class DAOClient {
 
         if (cursor.moveToFirst()) {
             do {
-                Client client = new Client();
-                client.setId(String.valueOf(cursor.getInt(cursor.getColumnIndexOrThrow("id"))));
-                client.setNom(cursor.getString(cursor.getColumnIndexOrThrow("nom")));
-                client.setEmail(cursor.getString(cursor.getColumnIndexOrThrow("email")));
-                client.setMotDePasse(cursor.getString(cursor.getColumnIndexOrThrow("motDePasse")));
-                client.setTelephone(cursor.getString(cursor.getColumnIndexOrThrow("telephone")));
-
+                Client client = extractClientFromCursor(cursor);
                 liste.add(client);
-
             } while (cursor.moveToNext());
         }
 
@@ -130,9 +116,10 @@ public class DAOClient {
         values.put("email", client.getEmail());
         values.put("motDePasse", client.getMotDePasse());
         values.put("telephone", client.getTelephone());
+        values.put("synced", client.isSynced() ? 1 : 0);
+        values.put("googleSignIn", client.isGoogleSignIn() ? 1 : 0);
 
-
-        int result = db.update("Client", values, "id=?", new String[]{String.valueOf(client.getId())});
+        int result = db.update("Client", values, "id=?", new String[]{client.getId()});
         close();
         return result;
     }
@@ -140,13 +127,32 @@ public class DAOClient {
     // ------------------------------
     //    SUPPRIMER CLIENT
     // ------------------------------
-    public int supprimerClient(int id) {
+    public int supprimerClient(String id) {
         open();
-        int result = db.delete("Client", "id=?", new String[]{String.valueOf(id)});
+        int result = db.delete("Client", "id=?", new String[]{id});
         close();
         return result;
     }
 
+    // ------------------------------
+    //    CLIENTS HORS LIGNE
+    // ------------------------------
+    public List<Client> getAllOfflineClients() {
+        return dbHelper.getOfflineClients();
+    }
 
-
+    // ------------------------------
+    //    MÉTHODE UTILE PRIVÉE
+    // ------------------------------
+    private Client extractClientFromCursor(Cursor cursor) {
+        Client client = new Client();
+        client.setId(cursor.getString(cursor.getColumnIndexOrThrow("id")));
+        client.setNom(cursor.getString(cursor.getColumnIndexOrThrow("nom")));
+        client.setEmail(cursor.getString(cursor.getColumnIndexOrThrow("email")));
+        client.setMotDePasse(cursor.getString(cursor.getColumnIndexOrThrow("motDePasse")));
+        client.setTelephone(cursor.getString(cursor.getColumnIndexOrThrow("telephone")));
+        client.setSynced(cursor.getInt(cursor.getColumnIndexOrThrow("synced")) == 1);
+        client.setGoogleSignIn(cursor.getInt(cursor.getColumnIndexOrThrow("googleSignIn")) == 1);
+        return client;
+    }
 }

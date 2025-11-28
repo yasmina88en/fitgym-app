@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Fond gris clair avec coins arrondis -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#E5E7EB"/>
+            <corners android:radius="12dp"/>
+        </shape>
+    </item>
+
+    <!-- Texte "?" centré via une forme simulée -->
+    <item android:gravity="center">
+        <shape android:shape="rectangle">
+            <size android:width="48dp" android:height="48dp"/>
+            <solid android:color="#9CA3AF"/>
+        </shape>
+    </item>
+
+</layer-list>

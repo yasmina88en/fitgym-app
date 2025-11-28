@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Ombre (rectangle plus grand, couleur grise translucide) -->
+    <item android:bottom="2dp" android:left="0dp" android:right="0dp" android:top="2dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#20000000"/> <!-- opacité ombre -->
+            <corners android:radius="26dp"/>
+        </shape>
+    </item>
+
+    <!-- Fond blanc arrondi -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#FFFFFF"/>
+            <corners android:radius="25dp"/>
+            <stroke android:width="1dp" android:color="#E6E7EB"/>
+        </shape>
+    </item>
+
+</layer-list>

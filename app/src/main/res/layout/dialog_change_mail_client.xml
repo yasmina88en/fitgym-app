@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_dialog_gradient"
+    android:clipToPadding="false"
+    tools:background="@drawable/bg_dialog_gradient">
+
+    <EditText
+        android:id="@+id/oldEmail"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:hint="Email actuel"
+        android:inputType="textEmailAddress"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:background="@drawable/bg_edittext_rounded"
+        android:textColor="#000000"
+        android:textColorHint="#B0B0B0"
+        android:layout_marginBottom="12dp"/>
+
+    <EditText
+        android:id="@+id/newEmail"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:hint="Nouvel email"
+        android:inputType="textEmailAddress"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:layout_marginBottom="12dp"
+        android:background="@drawable/bg_edittext_rounded"
+        android:textColor="#000000"
+        android:textColorHint="#B0B0B0"/>
+
+    <EditText
+        android:id="@+id/password"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:hint="Mot de passe"
+        android:inputType="textPassword"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:background="@drawable/bg_edittext_rounded"
+        android:textColor="#000000"
+        android:textColorHint="#B0B0B0"/>
+</LinearLayout>

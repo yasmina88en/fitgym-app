@@ -9,7 +9,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
-
+import com.example.fitgym.data.db.FirebaseHelper;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -17,7 +17,6 @@ import com.bumptech.glide.Glide;
 import com.example.fitgym.R;
 import com.example.fitgym.data.dao.DAOCoach;
 import com.example.fitgym.data.db.DatabaseHelper;
-import com.example.fitgym.data.db.FirebaseHelper;
 import com.example.fitgym.data.model.Categorie;
 import com.example.fitgym.data.model.Coach;
 import com.example.fitgym.data.model.Seance;
@@ -178,6 +177,16 @@ public class SeanceAdapter extends RecyclerView.Adapter<SeanceAdapter.SeanceView
                 return R.drawable.musculation;
             case "pilates":
                 return R.drawable.pilates;
+            case "zumba":
+                return R.drawable.zumba;
+            case "crossfit":
+                return R.drawable.crossfit;
+            case "cardio":
+                return R.drawable.cardio;
+            case "boxe":
+                return R.drawable.boxe;
+            case "stretching":
+                return R.drawable.stretching;
             default:
                 return R.drawable.default_image;
         }

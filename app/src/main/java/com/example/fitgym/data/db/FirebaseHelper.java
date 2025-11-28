@@ -8,13 +8,16 @@ import com.example.fitgym.data.model.Categorie;
 import com.example.fitgym.data.model.Client;
 import com.example.fitgym.data.model.Coach;
 import com.example.fitgym.data.model.Seance;
+import com.example.fitgym.data.model.Favoris;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class FirebaseHelper {
@@ -24,6 +27,7 @@ public class FirebaseHelper {
     private final DatabaseReference clientsRef;
     private final DatabaseReference categoriesRef;
     private final DatabaseReference seancesRef;
+    private final DatabaseReference favorisRef;
 
 
     public FirebaseHelper() {
@@ -33,34 +37,33 @@ public class FirebaseHelper {
         clientsRef = db.getReference("clients");
         categoriesRef = db.getReference("categories");
         seancesRef = db.getReference("seances");
-    }
+        favorisRef = db.getReference("favoris");
 
-    public void getClient(ClientCallback clientCallback) {
-        clientsRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if (snapshot.exists()) {
-                    // Prend le premier client trouvé
-                    for (DataSnapshot snap : snapshot.getChildren()) {
-                        Client client = snap.getValue(Client.class);
-                        if (client != null) {
-                            client.setId(snap.getKey());
-                            clientCallback.onCallback(client);
-                            return;
+    }
+    public void getClientByEmail(String email, ClientCallback callback) {
+        clientsRef.orderByChild("email")
+                .equalTo(email)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        if (snapshot.exists()) {
+                            for (DataSnapshot ds : snapshot.getChildren()) {
+                                Client c = ds.getValue(Client.class);
+                                if (c != null) c.setId(ds.getKey());
+                                callback.onCallback(c);
+                                return;
+                            }
                         }
+                        callback.onCallback(null);
                     }
-                    clientCallback.onCallback(null);
-                } else {
-                    clientCallback.onCallback(null);
-                }
-            }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                clientCallback.onCallback(null);
-            }
-        });
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        callback.onCallback(null);
+                    }
+                });
     }
+
 
 
 
@@ -207,6 +210,24 @@ public class FirebaseHelper {
             }
         });
     }
+
+    public void updateClientPhoto(String clientId, String photoBase64, UpdateCallback callback) {
+        // Référence vers la base de données de Firebase pour le client
+        DatabaseReference clientRef = FirebaseDatabase.getInstance().getReference("clients").child(clientId);
+
+        // Mettre à jour le champ 'photo' avec la chaîne Base64 de la photo
+        clientRef.child("photo").setValue(photoBase64)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        // Si la mise à jour a réussi
+                        callback.onComplete(true);
+                    } else {
+                        // Si la mise à jour a échoué
+                        callback.onComplete(false);
+                    }
+                });
+    }
+
 
     // ========================
     // ====== COACHS ==========
@@ -413,4 +434,215 @@ public class FirebaseHelper {
         });
 
     }
+
+    public void getClientPhoto(String clientId, PhotoCallback callback) {
+        // Référence vers Firebase Realtime Database pour le client
+        DatabaseReference clientRef = FirebaseDatabase.getInstance().getReference("clients").child(clientId);
+
+        // Récupérer la photo du client (supposons que l'URL ou la photo est stockée sous le champ "photo")
+        clientRef.child("photo").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                // Vérifie si une photo existe
+                String photoBase64 = snapshot.exists() ? snapshot.getValue(String.class) : null;
+
+                // Appelle le callback avec l'image Base64 ou null si aucune image
+                callback.onCallback(photoBase64);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                // Si la requête échoue, retourne null
+                callback.onCallback(null);
+            }
+        });
+    }
+
+
+    // Update the email of the client
+    public void updateClientEmail(String clientId, String newEmail, UpdateCallback callback) {
+        DatabaseReference clientRef = clientsRef.child(clientId);
+        clientRef.child("email").setValue(newEmail)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        callback.onComplete(true);
+                    } else {
+                        callback.onComplete(false);
+                    }
+                });
+    }
+
+
+    // Update the password of the client
+    public void updateClientPassword(String clientId, String newPassword, UpdateCallback callback) {
+        DatabaseReference clientRef = clientsRef.child(clientId);
+        clientRef.child("motDePasse").setValue(newPassword) // Utiliser motDePasse existant
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        callback.onComplete(true);
+                    } else {
+                        callback.onComplete(false);
+                    }
+                });
+    }
+    public void getAllClientsFromFirebase(Consumer<List<Client>> callback) {
+        FirebaseDatabase.getInstance().getReference("clients")
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        List<Client> clients = new ArrayList<>();
+                        for (DataSnapshot ds : snapshot.getChildren()) {
+                            Client c = ds.getValue(Client.class);
+                            if (c != null) {
+                                clients.add(c);
+                            }
+                        }
+                        callback.accept(clients);
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        callback.accept(Collections.emptyList());
+                    }
+                });
+    }
+    public void supprimerClientParEmail(String email, final DeleteCallback callback) {
+        // Référence à la racine "clients"
+        DatabaseReference clientsRef = FirebaseDatabase.getInstance().getReference("clients");
+
+        // Normaliser l'email
+        String emailNormalized = email.trim().toLowerCase();
+
+        // Requête par email
+        Query query = clientsRef.orderByChild("email").equalTo(emailNormalized);
+        query.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!snapshot.exists()) {
+                    callback.onComplete(false); // pas trouvé
+                    return;
+                }
+
+                boolean[] success = {true}; // Pour suivre si tout se passe bien
+
+                for (DataSnapshot snap : snapshot.getChildren()) {
+                    snap.getRef().removeValue((error, ref) -> {
+                        if (error != null) {
+                            success[0] = false;
+                        }
+                        callback.onComplete(success[0]);
+                    });
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                callback.onComplete(false);
+            }
+        });
+    }
+
+    // Callback interface
+    public interface DeleteCallback {
+        void onComplete(boolean success);
+    }
+
+    // Récupérer la photo d'un client par son ID (comme pour admin)
+    public void getClientPhotoByEmail(String email, PhotoCallback callback) {
+        if (email == null || email.trim().isEmpty()) {
+            callback.onCallback(null);
+            return;
+        }
+
+        clientsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                String photo = null;
+                for (DataSnapshot child : snapshot.getChildren()) {
+                    String childEmail = child.child("email").getValue(String.class);
+                    if (email.equalsIgnoreCase(childEmail)) {
+                        photo = child.child("photo").getValue(String.class);
+                        break;
+                    }
+                }
+                callback.onCallback(photo);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                callback.onCallback(null);
+            }
+        });
+    }
+    //=== FAVORIS CLIENT ===
+    // ============================
+    // Ajouter un favori
+    public void ajouterFavori(Favoris f, Consumer<Boolean> callback) {
+        if (f.getId() == null || f.getId().isEmpty()) {
+            f.setId(favorisRef.push().getKey());
+        }
+        favorisRef.child(f.getId()).setValue(f)
+                .addOnSuccessListener(aVoid -> callback.accept(true))
+                .addOnFailureListener(e -> callback.accept(false));
+    }
+
+    // Supprimer un favori
+    public void supprimerFavori(String favorisId, UpdateCallback callback) {
+        favorisRef.child(favorisId).removeValue()
+                .addOnCompleteListener(task -> callback.onComplete(task.isSuccessful()));
+    }
+
+    // Récupérer tous les favoris d'un client
+    public void getFavorisClient(String clientId, FavorisCallback callback) {
+        favorisRef.orderByChild("clientId").equalTo(clientId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        List<Favoris> list = new ArrayList<>();
+                        for (DataSnapshot s : snapshot.getChildren()) {
+                            Favoris f = s.getValue(Favoris.class);
+                            if (f != null) {
+                                f.setId(s.getKey());
+                                list.add(f);
+                            }
+                        }
+                        callback.onCallback(list);
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        callback.onCallback(new ArrayList<>());
+                    }
+                });
+    }
+    // FirebaseHelper.java (ajoute ceci)
+    public void supprimerFavoriParClientSeance(String clientId, String seanceId, UpdateCallback callback) {
+        favorisRef.orderByChild("clientId").equalTo(clientId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        String foundKey = null;
+                        for (DataSnapshot s : snapshot.getChildren()) {
+                            Favoris f = s.getValue(Favoris.class);
+                            if (f != null && seanceId.equals(f.getSeanceId())) {
+                                foundKey = s.getKey();
+                                break;
+                            }
+                        }
+                        if (foundKey != null) {
+                            supprimerFavori(foundKey, callback);
+                        } else {
+                            // nothing to delete on remote
+                            callback.onComplete(true);
+                        }
+                    }
+                    @Override public void onCancelled(@NonNull DatabaseError error) {
+                        callback.onComplete(false);
+                    }
+                });
+    }
+
+
+    public interface FavorisCallback { void onCallback(List<Favoris> favorisList); }
+
+
 }

@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    card_view:cardCornerRadius="12dp"
+    card_view:cardElevation="4dp"
+    app:cardBackgroundColor="@android:color/white">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="12dp">
+
+        <!-- IMAGE + COEUR FAVORI -->
+        <FrameLayout
+            android:layout_width="90dp"
+            android:layout_height="90dp"
+            android:layout_marginEnd="12dp">
+
+            <ImageView
+                android:id="@+id/imageSeance"
+                android:layout_width="90dp"
+                android:layout_height="90dp"
+                android:scaleType="centerCrop"
+                android:src="@drawable/default_image"
+                android:background="@drawable/rounded_corners"/>
+
+            <!-- Bouton coeur favoris -->
+            <ImageButton
+                android:id="@+id/btnFavori"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_gravity="top|end"
+                android:background="@android:color/transparent"
+                android:src="@drawable/ic_heart_filled"
+                android:padding="4dp"/>
+        </FrameLayout>
+
+        <!-- INFOS SEANCE -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/titre"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Titre de la séance"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/texte_noir"/>
+
+            <!-- Catégorie et niveau -->
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp">
+
+                <TextView
+                    android:id="@+id/categorieSeance"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_badge_violet"
+                    android:padding="4dp"
+                    android:textColor="@android:color/white"
+                    android:text="Yoga"
+                    android:textSize="12sp"/>
+
+                <TextView
+                    android:id="@+id/niveauSeance"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:background="@drawable/bg_filter_button"
+                    android:padding="4dp"
+                    android:textColor="@android:color/white"
+                    android:text="Intermédiaire"
+                    android:textSize="12sp"/>
+            </LinearLayout>
+
+            <!-- Coach et prix -->
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:id="@+id/imageCoach"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_coach"
+                    app:tint="#555" />
+
+                <TextView
+                    android:id="@+id/Prix"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:text="Sarah Martin · 25€"
+                    android:textSize="13sp"
+                    android:textColor="#555"/>
+            </LinearLayout>
+
+            <!-- Date et heure -->
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_calendar"
+                    app:tint="#777"/>
+
+                <TextView
+                    android:id="@+id/dateHeure"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:text="05/11/2025 · 09:00"
+                    android:textSize="12sp"
+                    android:textColor="#777"/>
+            </LinearLayout>
+
+            <!-- PLACES + BOUTON RESERVER SUR LA MEME LIGNE -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/places"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Places: 8/15"
+                    android:textSize="13sp"
+                    android:textColor="@color/violet_principal"/>
+
+                <Button
+                    android:id="@+id/btnReserver"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:text="Réserver"
+                    android:textAllCaps="false"
+                    android:textColor="#9C27B0"
+                    android:textSize="12sp"
+                    app:strokeColor="#9C27B0"
+                    app:strokeWidth="2dp"/>
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

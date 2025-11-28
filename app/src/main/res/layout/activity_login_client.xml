@@ -11,11 +11,11 @@
     <!-- Logo -->
     <ImageView
         android:id="@+id/logoImage"
-        android:layout_width="171dp"
-        android:layout_height="126dp"
+        android:layout_width="260dp"
+        android:layout_height="154dp"
         android:layout_marginBottom="16dp"
         android:contentDescription="Logo de l'application"
-        android:src="@drawable/iconlogin" />
+        android:src="@drawable/logo" />
 
     <!-- Login -->
     <TextView
@@ -23,10 +23,10 @@
         android:layout_height="wrap_content"
         android:text="Login :"
         android:textSize="16sp"
-        android:textColor="#516EF3"
+        android:textColor="#3B82F6"
         android:layout_marginBottom="8dp"
         android:textStyle="bold"
-         />
+        />
 
     <EditText
         android:id="@+id/etLogin"
@@ -46,11 +46,11 @@
         android:layout_height="wrap_content"
         android:text="Mot de Passe :"
         android:textSize="16sp"
-        android:textColor="#516EF3"
+        android:textColor="#3B82F6"
         android:layout_marginBottom="8dp"
         android:textStyle="bold"
 
-         />
+        />
 
     <EditText
         android:id="@+id/etPassword"
@@ -63,7 +63,7 @@
         android:textSize="16sp"
         android:layout_marginBottom="16dp"
         android:drawableEnd="@drawable/ic_eye"
-    />
+        />
 
     <!-- Forgot Password -->
     <TextView
@@ -80,14 +80,17 @@
         android:fontFamily="serif" />
 
     <!-- Login Button -->
-    <Button
+    <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/btnSeConnecter1"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Se connecter"
-        android:backgroundTint="#516EF3"
         android:textColor="@android:color/white"
-        android:layout_marginBottom="16dp" />
+        android:layout_marginBottom="16dp"
+        android:padding="12dp"
+        android:gravity="center"
+        android:background="@drawable/gradient_color"
+        android:textAllCaps="false"/>
 
     <!-- Google Sign-In -->
     <TextView

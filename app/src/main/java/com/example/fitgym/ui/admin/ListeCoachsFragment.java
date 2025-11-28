@@ -19,6 +19,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.MultiAutoCompleteTextView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -37,6 +38,7 @@ import com.example.fitgym.data.dao.DAOCoach;
 import com.example.fitgym.data.db.DatabaseHelper;
 import com.example.fitgym.data.db.FirebaseHelper;
 import com.example.fitgym.data.model.Coach;
+import com.example.fitgym.data.model.Seance;
 import com.example.fitgym.ui.viewmodel.CoachViewModel;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
@@ -79,6 +81,7 @@ public class ListeCoachsFragment extends Fragment {
                              @Nullable Bundle savedInstanceState) {
         View vue = inflater.inflate(R.layout.activity_liste_coachs, container, false);
 
+        // --- Initialisations ---
         dbHelper = new DatabaseHelper(getContext());
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         daoCoach = new DAOCoach(db);
@@ -96,23 +99,18 @@ public class ListeCoachsFragment extends Fragment {
         recyclerViewCoachs.setAdapter(adaptateur);
 
         configurerEcouteurs();
-        observerViewModel();
 
-        // Charger depuis SQLite en local
-        // Charger depuis SQLite en local
+        // --- 1️⃣ Charger depuis SQLite (local) ---
         List<Coach> localCoachs = daoCoach.listerCoachs();
-
-// ✅ Nettoyage des coachs sans ID (anti “fantômes”)
         localCoachs.removeIf(c -> c.getId() == null || c.getId().trim().isEmpty());
 
-// ✅ Supprimer aussi de SQLite si jamais il y en a
+        // Supprimer les fantômes de SQLite
         for (Coach c : new ArrayList<>(localCoachs)) {
             if (c.getId() == null || c.getId().trim().isEmpty()) {
                 daoCoach.supprimerCoachSansId(c.getNomComplet());
             }
         }
 
-// ✅ Mettre à jour les listes et rafraîchir l’affichage
         listeCompleteCoachs.clear();
         listeCompleteCoachs.addAll(localCoachs);
         listeAffichee.clear();
@@ -121,6 +119,40 @@ public class ListeCoachsFragment extends Fragment {
 
         Log.d("ListeCoachsFragment", "Coachs locaux chargés : " + localCoachs.size());
 
+        // --- 2️⃣ Charger depuis Firebase (cloud) ---
+        FirebaseHelper firebaseHelper = new FirebaseHelper();
+        firebaseHelper.getAllCoaches(coaches -> {
+            if (coaches == null || coaches.isEmpty()) return;
+
+            // Facultatif : calculer les séances pour chaque coach si nécessaire
+            for (Coach c : coaches) {
+                firebaseHelper.getAllSeances(snapshot -> {
+                    int nbSeances = 0;
+                    for (Seance s : snapshot) {
+                        if (s.getCoachId() != null && s.getCoachId().equals(c.getId())) {
+                            nbSeances++;
+                        }
+                    }
+                    c.setSessionCount(nbSeances);
+                    adaptateur.notifyDataSetChanged();
+                });
+            }
+
+            // Mise à jour des listes et adapter
+            listeCompleteCoachs.clear();
+            listeCompleteCoachs.addAll(coaches);
+            listeAffichee.clear();
+            listeAffichee.addAll(coaches);
+            adaptateur.definirCoachs(listeAffichee);
+
+            // Synchroniser SQLite pour avoir la version à jour
+            daoCoach.viderCoachs();
+            for (Coach c : coaches) {
+                daoCoach.ajouterCoach(c);
+            }
+
+            Log.d("ListeCoachsFragment", "Coachs Firebase chargés : " + coaches.size());
+        });
 
         return vue;
     }
@@ -138,7 +170,7 @@ public class ListeCoachsFragment extends Fragment {
         Spinner spinnerFiltre = dialogView.findViewById(R.id.spinnerFiltre);
         Spinner spinnerSort = dialogView.findViewById(R.id.spinnerSort);
 
-        String[] filtres = {"Tous", "Fitness", "Yoga", "Crossfit", "Cardio"};
+        String[] filtres = {"Tous", "Yoga", "Crossfit", "Cardio","Musculation","Pilates","Zumba","Box","Stretching"};
         String[] tris = {"Nom (A-Z)", "Nom (Z-A)", "Plus populaire ↑", "Séances ↑"};
 
         spinnerFiltre.setAdapter(new ArrayAdapter<>(requireContext(),
@@ -209,6 +241,7 @@ public class ListeCoachsFragment extends Fragment {
             if (coaches == null || coaches.isEmpty()) {
                 return;
             }
+
             listeCompleteCoachs.clear();
             listeCompleteCoachs.addAll(coaches);
             listeAffichee.clear();
@@ -231,7 +264,8 @@ public class ListeCoachsFragment extends Fragment {
 
         TextInputEditText edtNom = vueDialog.findViewById(R.id.inputNomComplet);
         TextInputEditText edtDescription = vueDialog.findViewById(R.id.inputBiographie);
-        TextInputEditText edtSpecialites = vueDialog.findViewById(R.id.inputSpecialites);
+        MultiAutoCompleteTextView inputSpecialites = vueDialog.findViewById(R.id.inputSpecialites);
+        ChipGroup chipGroupSpecialites = vueDialog.findViewById(R.id.chipGroupSpecialites);
         MaterialButton btnChoisirImage = vueDialog.findViewById(R.id.inputUrlImage);
         Button btnAnnuler = vueDialog.findViewById(R.id.btnAnnuler);
         Button btnAjouter = vueDialog.findViewById(R.id.btnModifier);
@@ -241,6 +275,37 @@ public class ListeCoachsFragment extends Fragment {
         imagePreviewActive = preview;
         currentImageUri = null;
         imageBase64 = null;
+
+        // Liste des spécialités disponibles
+        // Préparer l'AutoComplete
+        String[] specialitesDisponibles = {"Yoga", "Crossfit", "Cardio", "Musculation", "Pilates", "Zumba", "Box", "Stretching"};
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(),
+                android.R.layout.simple_dropdown_item_1line, specialitesDisponibles);
+
+        inputSpecialites.setAdapter(adapter);
+        inputSpecialites.setThreshold(1); // Commence à proposer dès 1 caractère
+        inputSpecialites.setTokenizer(new MultiAutoCompleteTextView.CommaTokenizer());
+
+// Ajouter chip quand on sélectionne une spécialité
+        inputSpecialites.setOnItemClickListener((parent, view, position, id) -> {
+            String specialiteChoisie = adapter.getItem(position);
+            if (specialiteChoisie == null) return;
+
+            // Vérifier doublons
+            for (int i = 0; i < chipGroupSpecialites.getChildCount(); i++) {
+                Chip chip = (Chip) chipGroupSpecialites.getChildAt(i);
+                if (chip.getText().toString().equalsIgnoreCase(specialiteChoisie)) return;
+            }
+
+            Chip chip = new Chip(getContext());
+            chip.setText(specialiteChoisie);
+            chip.setCloseIconVisible(true);
+            chip.setOnCloseIconClickListener(c -> chipGroupSpecialites.removeView(chip));
+            chipGroupSpecialites.addView(chip);
+
+            inputSpecialites.setText(""); // clear input
+        });
+
 
         btnAnnuler.setOnClickListener(v -> dialog.dismiss());
 
@@ -253,18 +318,23 @@ public class ListeCoachsFragment extends Fragment {
         btnAjouter.setOnClickListener(v -> {
             String nom = edtNom.getText().toString().trim();
             String desc = edtDescription.getText().toString().trim();
-            String specs = edtSpecialites.getText().toString().trim();
 
             if (nom.isEmpty()) {
                 Toast.makeText(getContext(), "Nom obligatoire", Toast.LENGTH_SHORT).show();
                 return;
             }
 
+            // 🔹 Récupérer les spécialités depuis les chips
+            List<String> specialitesChoisies = new ArrayList<>();
+            for (int i = 0; i < chipGroupSpecialites.getChildCount(); i++) {
+                Chip chip = (Chip) chipGroupSpecialites.getChildAt(i);
+                specialitesChoisies.add(chip.getText().toString());
+            }
+
             Coach nouveauCoach = new Coach();
-            // On remplit prénom dans inputNomComplet si l'UI contient nom complet; ici on écrit dans prenom vide
             nouveauCoach.setNom(nom);
             nouveauCoach.setDescription(desc);
-            nouveauCoach.setSpecialites(specs.isEmpty() ? new ArrayList<>() : Arrays.asList(specs.split(",")));
+            nouveauCoach.setSpecialites(specialitesChoisies);
 
             if (imageBase64 != null && imageBase64.trim().length() > 20) {
                 nouveauCoach.setPhotoUrl(imageBase64);
@@ -275,14 +345,13 @@ public class ListeCoachsFragment extends Fragment {
             currentImageUri = null;
             imageBase64 = null;
 
+
             new FirebaseHelper().ajouterCoach(nouveauCoach, success -> {
                 if (success) {
                     Toast.makeText(getContext(), "Coach ajouté !", Toast.LENGTH_SHORT).show();
                     listeCompleteCoachs.add(0, nouveauCoach);
                     adaptateur.definirCoachs(listeCompleteCoachs);
                     dialog.dismiss();
-
-                    // Stockage SQLite (coach doit maintenant avoir un id fourni par Firebase)
                     daoCoach.ajouterCoach(nouveauCoach);
                 } else {
                     Toast.makeText(getContext(), "Erreur lors de l'ajout", Toast.LENGTH_SHORT).show();
@@ -293,6 +362,7 @@ public class ListeCoachsFragment extends Fragment {
         dialog.show();
     }
 
+
     private void afficherDialogModifierCoach(Coach coach) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         View vueDialog = getLayoutInflater().inflate(R.layout.dialog_modifier_coach, null);
@@ -300,7 +370,8 @@ public class ListeCoachsFragment extends Fragment {
         AlertDialog dialog = builder.create();
 
         TextInputEditText inputNom = vueDialog.findViewById(R.id.inputNomComplet);
-        TextInputEditText inputSpecialites = vueDialog.findViewById(R.id.inputSpecialites);
+        MultiAutoCompleteTextView inputSpecialites = vueDialog.findViewById(R.id.inputSpecialites);
+        ChipGroup chipGroupSpecialites = vueDialog.findViewById(R.id.chipGroupSpecialites);
         TextInputEditText inputBio = vueDialog.findViewById(R.id.inputBiographie);
         MaterialButton btnChoisirImage = vueDialog.findViewById(R.id.inputUrlImage);
         MaterialButton btnModifier = vueDialog.findViewById(R.id.btnModifier);
@@ -309,14 +380,59 @@ public class ListeCoachsFragment extends Fragment {
 
         inputNom.setText(coach.getNomComplet());
         inputBio.setText(coach.getDescription());
-        if (coach.getSpecialites() != null) inputSpecialites.setText(String.join(",", coach.getSpecialites()));
 
+        // Charger les chips existants
+        chipGroupSpecialites.removeAllViews();
+        if (coach.getSpecialites() != null) {
+            for (String s : coach.getSpecialites()) {
+                Chip chip = new Chip(getContext());
+                chip.setText(s);
+                chip.setCloseIconVisible(true);
+                chip.setOnCloseIconClickListener(c -> chipGroupSpecialites.removeView(chip));
+                chipGroupSpecialites.addView(chip);
+            }
+        }
+
+        // Préparer l'AutoComplete
+        // Préparer l'AutoComplete
+        String[] specialitesDisponibles = {"Yoga", "Crossfit", "Cardio","Musculation","Pilates","Zumba","Box","Stretching"};
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(),
+                android.R.layout.simple_dropdown_item_1line, specialitesDisponibles);
+
+        inputSpecialites.setAdapter(adapter);
+        inputSpecialites.setThreshold(1); // Commence à proposer dès 1 caractère
+        inputSpecialites.setTokenizer(new MultiAutoCompleteTextView.CommaTokenizer());
+
+// Ajouter chip quand on sélectionne une spécialité
+        inputSpecialites.setOnItemClickListener((parent, view, position, id) -> {
+            String specialiteChoisie = adapter.getItem(position);
+            if (specialiteChoisie == null) return;
+
+            // Vérifier doublons
+            for (int i = 0; i < chipGroupSpecialites.getChildCount(); i++) {
+                Chip chip = (Chip) chipGroupSpecialites.getChildAt(i);
+                if (chip.getText().toString().equalsIgnoreCase(specialiteChoisie)) return;
+            }
+
+            Chip chip = new Chip(getContext());
+            chip.setText(specialiteChoisie);
+            chip.setCloseIconVisible(true);
+            chip.setOnCloseIconClickListener(c -> chipGroupSpecialites.removeView(chip));
+            chipGroupSpecialites.addView(chip);
+
+            inputSpecialites.setText(""); // clear input
+        });
+
+        // Préparer l'image
         String base64Image = coach.getPhotoUrl();
         if (base64Image != null && base64Image.trim().length() > 20) {
             Bitmap bitmap = convertBase64ToBitmap(base64Image);
             if (bitmap != null) {
-                Glide.with(getContext()).load(bitmap).placeholder(R.drawable.ic_placeholder)
-                        .error(R.drawable.ic_placeholder).into(preview);
+                Glide.with(getContext())
+                        .load(bitmap)
+                        .placeholder(R.drawable.ic_placeholder)
+                        .error(R.drawable.ic_placeholder)
+                        .into(preview);
             } else preview.setImageResource(R.drawable.ic_placeholder);
         } else preview.setImageResource(R.drawable.ic_placeholder);
 
@@ -336,16 +452,22 @@ public class ListeCoachsFragment extends Fragment {
         btnModifier.setOnClickListener(v -> {
             String nom = inputNom.getText().toString().trim();
             String desc = inputBio.getText().toString().trim();
-            String specs = inputSpecialites.getText().toString().trim();
 
             if (nom.isEmpty()) {
                 Toast.makeText(getContext(), "Nom obligatoire", Toast.LENGTH_SHORT).show();
                 return;
             }
 
+            // Récupérer toutes les spécialités depuis les chips
+            List<String> specialitesChoisies = new ArrayList<>();
+            for (int i = 0; i < chipGroupSpecialites.getChildCount(); i++) {
+                Chip chip = (Chip) chipGroupSpecialites.getChildAt(i);
+                specialitesChoisies.add(chip.getText().toString());
+            }
+
             coach.setNom(nom);
             coach.setDescription(desc);
-            coach.setSpecialites(specs.isEmpty() ? new ArrayList<>() : Arrays.asList(specs.split(",")));
+            coach.setSpecialites(specialitesChoisies);
 
             if (imageBase64 != null && imageBase64.trim().length() > 20) {
                 coach.setPhotoUrl(imageBase64);
@@ -363,6 +485,7 @@ public class ListeCoachsFragment extends Fragment {
 
         dialog.show();
     }
+
 
     private String convertUriToBase64(Uri uri) {
         try {

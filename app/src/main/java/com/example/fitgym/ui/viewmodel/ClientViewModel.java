@@ -33,8 +33,10 @@ public class ClientViewModel extends AndroidViewModel {
 
     // PROFIL PAR ID
     public Client obtenirProfil(int id) {
-        return clientRepository.obtenirClientParId(id);
+        // Convertir l'int en String
+        return clientRepository.obtenirClientParId(String.valueOf(id));
     }
+
 
     // MODIFIER PROFIL
     public int modifierProfil(Client client) {

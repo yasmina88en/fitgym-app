@@ -1,27 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
-    android:padding="16dp"
+    android:padding="20dp"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_dialog"> <!-- Fond arrondi et couleur violette/bleue -->
 
     <EditText
         android:id="@+id/Email"
         android:hint="Votre email actuel"
         android:inputType="textEmailAddress"
+        android:padding="12dp"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="48dp"
+        android:layout_marginBottom="12dp"
+        android:background="@drawable/bg_edittext"/> <!-- Style EditText -->
 
     <EditText
         android:id="@+id/NewEmail"
         android:hint="Nouveau email"
         android:inputType="textEmailAddress"
+        android:padding="12dp"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="48dp"
+        android:layout_marginBottom="12dp"
+        android:background="@drawable/bg_edittext"/>
 
     <EditText
         android:id="@+id/Password"
         android:hint="Mot de passe"
         android:inputType="textPassword"
+        android:padding="12dp"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="48dp"
+        android:background="@drawable/bg_edittext"/>
+
 </LinearLayout>

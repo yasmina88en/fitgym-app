@@ -15,7 +15,7 @@
         android:layout_marginTop="6dp"
         android:layout_marginBottom="16dp"
         android:contentDescription="Logo de l'application"
-        android:src="@drawable/iconlogin" />
+        android:src="@drawable/logo" />
 
     <TextView
         android:id="@+id/textBienvenue"

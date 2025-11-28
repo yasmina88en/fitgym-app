@@ -3,6 +3,7 @@ package com.example.fitgym.data.db;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
@@ -20,7 +21,7 @@ import java.util.UUID;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     public static final String DATABASE_NAME = "sport_app.db";
-    public static final int DATABASE_VERSION = 5;
+    public static final int DATABASE_VERSION = 9;
 
     private static final String TABLE_ADMIN = "Admin";
 
@@ -54,10 +55,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                 "nom TEXT NOT NULL," +
                 "email TEXT NOT NULL UNIQUE," +
-                "motDePasse TEXT NOT NULL," +  // <--- ici
-                "telephone TEXT" +
+                "motDePasse TEXT NOT NULL," +
+                "telephone TEXT," +
+                "synced INTEGER DEFAULT 0" +
                 ");";
         db.execSQL(createClientTable);
+
         String CREATE_TABLE_CATEGORIES = "CREATE TABLE categories (" +
                 "categorieId TEXT PRIMARY KEY, " +
                 "nom TEXT, " +
@@ -79,17 +82,46 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 "coachId TEXT, " +
                 "categorieId TEXT)";
         db.execSQL(CREATE_TABLE_SEANCES);
+        // Favoris locaux
+        String CREATE_TABLE_FAVORIS = "CREATE TABLE IF NOT EXISTS favoris (" +
+                "id TEXT PRIMARY KEY, " +
+                "seanceId TEXT NOT NULL, " +
+                "clientId TEXT NOT NULL) ";
+        db.execSQL(CREATE_TABLE_FAVORIS);
 
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        if (oldVersion < 8) {
+            // Vérifie si la table Client existe avant de faire ALTER
+            Cursor c = db.rawQuery(
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name='Client'", null);
+            boolean clientExists = c.getCount() > 0;
+            c.close();
+            if (clientExists) {
+                try {
+                    db.execSQL("ALTER TABLE Client ADD COLUMN synced INTEGER DEFAULT 0");
+                } catch (Exception e) {
+                    e.printStackTrace(); // ignore si la colonne existe déjà
+                }
+            }
+        }
+
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_ADMIN);
         db.execSQL("DROP TABLE IF EXISTS Coach");
-        db.execSQL("DROP TABLE IF EXISTS Client");
         db.execSQL("DROP TABLE IF EXISTS seances");
         db.execSQL("DROP TABLE IF EXISTS categories");
+        db.execSQL("DROP TABLE IF EXISTS favoris");
+        db.execSQL("DROP TABLE IF EXISTS Client");
+
         onCreate(db);
+    }
+
+    @Override
+    public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // On recrée la base proprement en cas de downgrade
+        onUpgrade(db, oldVersion, newVersion);
     }
 
     // Admin helpers
@@ -97,15 +129,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.rawQuery(
                 "SELECT login, mot_de_passe FROM " + TABLE_ADMIN + " WHERE login=? AND mot_de_passe=?",
-                new String[]{login, motDePasse}
-        );
+                new String[] { login, motDePasse });
 
         Admin admin = null;
         if (cursor.moveToFirst()) {
             admin = new Admin(
                     cursor.getString(cursor.getColumnIndexOrThrow("login")),
-                    cursor.getString(cursor.getColumnIndexOrThrow("mot_de_passe"))
-            );
+                    cursor.getString(cursor.getColumnIndexOrThrow("mot_de_passe")));
         }
         cursor.close();
         db.close();
@@ -120,8 +150,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         if (cursor.moveToFirst()) {
             admin = new Admin(
                     cursor.getString(cursor.getColumnIndexOrThrow("login")),
-                    cursor.getString(cursor.getColumnIndexOrThrow("mot_de_passe"))
-            );
+                    cursor.getString(cursor.getColumnIndexOrThrow("mot_de_passe")));
         }
         cursor.close();
         db.close();
@@ -134,7 +163,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put("login", admin.getLogin());
         values.put("mot_de_passe", admin.getMotDePasse());
 
-        int rows = db.update(TABLE_ADMIN, values, "login=?", new String[]{admin.getLogin()});
+        int rows = db.update(TABLE_ADMIN, values, "login=?", new String[] { admin.getLogin() });
         if (rows == 0) {
             db.insert(TABLE_ADMIN, null, values);
         }
@@ -156,6 +185,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.update(TABLE_ADMIN, cv, null, null);
         db.close();
     }
+
     public boolean insertOrUpdateSeance(Seance s) {
         SQLiteDatabase db = this.getWritableDatabase(); // utilise SQLiteOpenHelper (classe DatabaseHelper)
         ContentValues cv = new ContentValues();
@@ -199,7 +229,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             s.setPlacesDisponibles(cursor.getInt(cursor.getColumnIndexOrThrow("placesDisponibles")));
             s.setDescription(cursor.getString(cursor.getColumnIndexOrThrow("description")));
             s.setCoachId(cursor.getString(cursor.getColumnIndexOrThrow("coachId")));
-            s.setCategorieId(cursor.getString(cursor.getColumnIndexOrThrow("categorieId"))); // utilise la méthode correcte
+            s.setCategorieId(cursor.getString(cursor.getColumnIndexOrThrow("categorieId"))); // utilise la méthode
+                                                                                             // correcte
             list.add(s);
         }
         cursor.close();
@@ -210,7 +241,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     // Récupérer une séance par id
     public Seance getSeanceById(String id) {
         SQLiteDatabase db = this.getReadableDatabase();
-        Cursor cursor = db.rawQuery("SELECT * FROM seances WHERE id = ?", new String[]{id});
+        Cursor cursor = db.rawQuery("SELECT * FROM seances WHERE id = ?", new String[] { id });
         Seance s = null;
         if (cursor.moveToFirst()) {
             s = new Seance();
@@ -235,16 +266,16 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     // Supprimer une séance locale par id
     public boolean deleteSeance(String id) {
         SQLiteDatabase db = this.getWritableDatabase();
-        int rows = db.delete("seances", "id=?", new String[]{id});
+        int rows = db.delete("seances", "id=?", new String[] { id });
         db.close();
         return rows > 0;
     }
+
     public void deleteAllSeances() {
         SQLiteDatabase db = this.getWritableDatabase();
         db.delete("seances", null, null);
         db.close();
     }
-
 
     // Mettre à jour (si tu veux séparer update/insert)
     public boolean updateSeance(Seance s) {
@@ -262,7 +293,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         cv.put("coachId", s.getCoachId());
         cv.put("categorieId", s.getCategorieId());
 
-        int rows = db.update("seances", cv, "id=?", new String[]{s.getId()});
+        int rows = db.update("seances", cv, "id=?", new String[] { s.getId() });
         db.close();
         return rows > 0;
     }
@@ -297,7 +328,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     public Categorie getCategorieById(String id) {
         SQLiteDatabase db = this.getReadableDatabase();
-        Cursor cursor = db.rawQuery("SELECT * FROM categories WHERE categorieId = ?", new String[]{id});
+        Cursor cursor = db.rawQuery("SELECT * FROM categories WHERE categorieId = ?", new String[] { id });
         Categorie c = null;
         if (cursor.moveToFirst()) {
             c = new Categorie();
@@ -312,7 +343,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     public Coach getCoachById(String id) {
         SQLiteDatabase db = this.getReadableDatabase();
-        Cursor cursor = db.rawQuery("SELECT * FROM Coach WHERE id = ?", new String[]{id});
+        Cursor cursor = db.rawQuery("SELECT * FROM Coach WHERE id = ?", new String[] { id });
         Coach c = null;
         if (cursor.moveToFirst()) {
             c = new Coach();
@@ -330,40 +361,140 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.close();
         return c;
     }
-    public Client getClient(String email, String password) {
+
+    // Synchroniser un coach dans la base locale
+    public boolean syncCoach(Coach coach) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put("id", coach.getId());
+        cv.put("nom", coach.getNom());
+        cv.put("photo_url", coach.getPhotoUrl());
+        cv.put("specialites", coach.getSpecialites() != null ? String.join(",", coach.getSpecialites()) : "");
+        cv.put("contact", coach.getContact());
+        cv.put("description", coach.getDescription());
+        cv.put("rating", coach.getRating());
+        cv.put("review_count", coach.getReviewCount());
+        cv.put("session_count", coach.getSessionCount());
+
+        long res = db.insertWithOnConflict("Coach", null, cv, SQLiteDatabase.CONFLICT_REPLACE);
+        db.close();
+        return res != -1;
+    }
+
+    // Récupérer tous les coachs locaux
+    public List<Coach> getAllCoaches() {
         SQLiteDatabase db = this.getReadableDatabase();
-        Cursor c = db.rawQuery(
-                "SELECT * FROM Client WHERE email=? AND motDePasse=?",
-                new String[]{email, password}
-        );
+        Cursor cursor = db.rawQuery("SELECT * FROM Coach ORDER BY nom ASC", null);
+        List<Coach> coaches = new ArrayList<>();
+
+        while (cursor.moveToNext()) {
+            Coach c = new Coach();
+            c.setId(cursor.getString(cursor.getColumnIndexOrThrow("id")));
+            c.setNom(cursor.getString(cursor.getColumnIndexOrThrow("nom")));
+            c.setPhotoUrl(cursor.getString(cursor.getColumnIndexOrThrow("photo_url")));
+            String specialites = cursor.getString(cursor.getColumnIndexOrThrow("specialites"));
+            if (specialites != null && !specialites.isEmpty()) {
+                c.setSpecialites(List.of(specialites.split(",")));
+            }
+            c.setContact(cursor.getString(cursor.getColumnIndexOrThrow("contact")));
+            c.setDescription(cursor.getString(cursor.getColumnIndexOrThrow("description")));
+            c.setRating(cursor.getDouble(cursor.getColumnIndexOrThrow("rating")));
+            c.setReviewCount(cursor.getInt(cursor.getColumnIndexOrThrow("review_count")));
+            c.setSessionCount(cursor.getInt(cursor.getColumnIndexOrThrow("session_count")));
+            coaches.add(c);
+        }
+
+        cursor.close();
+        db.close();
+        return coaches;
+    }
+
+    // Supprimer tous les coachs (pour refresh)
+    public void deleteAllCoaches() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete("Coach", null, null);
+        db.close();
+    }
+
+    // Dans DatabaseHelper.java
+    public void syncClient(Client client) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+
+        values.put("synced", client.isSynced() ? 1 : 0);
+        values.put("nom", client.getNom());
+        values.put("email", client.getEmail() != null ? client.getEmail().trim() : "");
+        values.put("motDePasse", client.getMotDePasse());
+        values.put("telephone", client.getTelephone());
+
+        // update existant
+        int rows = db.update("Client", values, "email = ?", new String[] { client.getEmail().trim() });
+
+        if (rows == 0) {
+            try {
+                db.insertOrThrow("Client", null, values);
+            } catch (SQLiteConstraintException e) {
+                db.update("Client", values, "email = ?", new String[] { client.getEmail().trim() });
+            }
+        }
+
+        db.close();
+    }
+
+    public Client getClientByEmail(String email) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT * FROM Client WHERE email = ?", new String[] { email });
 
         Client client = null;
-        if (c != null && c.moveToFirst()) {
+        if (cursor.moveToFirst()) {
             client = new Client();
-            client.setId(c.getString(c.getColumnIndexOrThrow("id")));
-            client.setNom(c.getString(c.getColumnIndexOrThrow("nom")));
-            client.setEmail(c.getString(c.getColumnIndexOrThrow("email")));
-            c.close();
+            client.setId(cursor.getString(cursor.getColumnIndexOrThrow("id")));
+            client.setNom(cursor.getString(cursor.getColumnIndexOrThrow("nom")));
+            client.setEmail(cursor.getString(cursor.getColumnIndexOrThrow("email")));
+            client.setMotDePasse(cursor.getString(cursor.getColumnIndexOrThrow("motDePasse")));
+            client.setTelephone(cursor.getString(cursor.getColumnIndexOrThrow("telephone")));
+            client.setSynced(cursor.getInt(cursor.getColumnIndexOrThrow("synced")) == 1);
         }
+
+        cursor.close();
         db.close();
         return client;
     }
+
+    public Client getClientById(String id) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT * FROM Client WHERE id = ?", new String[] { id });
+
+        Client client = null;
+        if (cursor.moveToFirst()) {
+            client = new Client();
+            client.setId(cursor.getString(cursor.getColumnIndexOrThrow("id")));
+            client.setNom(cursor.getString(cursor.getColumnIndexOrThrow("nom")));
+            client.setEmail(cursor.getString(cursor.getColumnIndexOrThrow("email")));
+            client.setMotDePasse(cursor.getString(cursor.getColumnIndexOrThrow("motDePasse")));
+            client.setTelephone(cursor.getString(cursor.getColumnIndexOrThrow("telephone")));
+            client.setSynced(cursor.getInt(cursor.getColumnIndexOrThrow("synced")) == 1);
+        }
+
+        cursor.close();
+        db.close();
+        return client;
+    }
+
     public List<Client> getOfflineClients() {
         SQLiteDatabase db = this.getReadableDatabase();
-        Cursor c = db.rawQuery("SELECT * FROM Client", null);
+        Cursor c = db.rawQuery("SELECT * FROM Client WHERE synced = 0", null);
         List<Client> offlineClients = new ArrayList<>();
 
         while (c.moveToNext()) {
-            String id = c.getString(c.getColumnIndexOrThrow("id"));
-            // Si l'id n'est pas un UID Firebase (exemple hors ligne temporaire)
-            if (!id.matches("^[a-zA-Z0-9\\-]{28}$")) { // Firebase UID length ~28
-                Client client = new Client();
-                client.setId(id);
-                client.setNom(c.getString(c.getColumnIndexOrThrow("nom")));
-                client.setEmail(c.getString(c.getColumnIndexOrThrow("email")));
-                client.setMotDePasse(c.getString(c.getColumnIndexOrThrow("motDePasse")));
-                offlineClients.add(client);
-            }
+            Client client = new Client();
+            client.setId(c.getString(c.getColumnIndexOrThrow("id")));
+            client.setNom(c.getString(c.getColumnIndexOrThrow("nom")));
+            client.setEmail(c.getString(c.getColumnIndexOrThrow("email")));
+            client.setMotDePasse(c.getString(c.getColumnIndexOrThrow("motDePasse")));
+            client.setTelephone(c.getString(c.getColumnIndexOrThrow("telephone")));
+            client.setSynced(false);
+            offlineClients.add(client);
         }
 
         c.close();
@@ -371,21 +502,101 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return offlineClients;
     }
 
-    public boolean deleteClient(String email) {
-        SQLiteDatabase db = this.getWritableDatabase();
-        int rows = db.delete("Client", "email=?", new String[]{email});
+    public List<Client> getAllClients() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT * FROM Client ORDER BY nom ASC", null);
+
+        List<Client> clients = new ArrayList<>();
+
+        while (cursor.moveToNext()) {
+            Client c = new Client();
+            c.setId(cursor.getString(cursor.getColumnIndexOrThrow("id")));
+            c.setNom(cursor.getString(cursor.getColumnIndexOrThrow("nom")));
+            c.setEmail(cursor.getString(cursor.getColumnIndexOrThrow("email")));
+            c.setMotDePasse(cursor.getString(cursor.getColumnIndexOrThrow("motDePasse")));
+            c.setTelephone(cursor.getString(cursor.getColumnIndexOrThrow("telephone")));
+            c.setSynced(cursor.getInt(cursor.getColumnIndexOrThrow("synced")) == 1);
+
+            clients.add(c);
+        }
+
+        cursor.close();
         db.close();
-        return rows > 0;
+        return clients;
+    }
+    // FAVORIS (nouveau)
+    // ---------------------------
+
+    /**
+     * Ajoute un favori localement.
+     * Retourne true si inséré correctement (ou déjà existant remplacé).
+     */
+    public boolean ajouterFavoriLocal(String clientId, String seanceId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        String id = UUID.randomUUID().toString();
+        cv.put("id", id);
+        cv.put("clientId", clientId);
+        cv.put("seanceId", seanceId);
+
+        long res = -1;
+        try {
+            res = db.insertWithOnConflict("favoris", null, cv, SQLiteDatabase.CONFLICT_IGNORE);
+            // si conflit (duplicate), on l'ignore. On peut retourner true car favori déjà
+            // présent.
+            if (res == -1) {
+                // peut-être déjà présent — vérifier et retourner true
+                Cursor c = db.rawQuery("SELECT id FROM favoris WHERE clientId=? AND seanceId=?",
+                        new String[] { clientId, seanceId });
+                boolean exists = c.moveToFirst();
+                c.close();
+                db.close();
+                return exists;
+            }
+        } finally {
+            if (db.isOpen())
+                db.close();
+        }
+        return res != -1;
     }
 
-    public void syncClient(Client client) {
-        SQLiteDatabase db = this.getWritableDatabase();
-        ContentValues values = new ContentValues();
-        values.put("nom", client.getNom());
-        values.put("email", client.getEmail());
-
-        db.insertWithOnConflict("Client", null, values, SQLiteDatabase.CONFLICT_REPLACE);
+    /**
+     * Vérifie si une séance est déjà en favori pour ce client.
+     */
+    public boolean estFavori(String clientId, String seanceId) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor c = db.rawQuery("SELECT 1 FROM favoris WHERE clientId=? AND seanceId=?",
+                new String[] { clientId, seanceId });
+        boolean exists = c.moveToFirst();
+        c.close();
         db.close();
+        return exists;
+    }
+
+    /**
+     * Récupère la liste des seanceId favoris pour un client (utile pour loader
+     * l'affichage).
+     */
+    public List<String> getFavorisParClient(String clientId) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor c = db.rawQuery("SELECT seanceId FROM favoris WHERE clientId = ?", new String[] { clientId });
+        List<String> list = new ArrayList<>();
+        while (c.moveToNext()) {
+            list.add(c.getString(c.getColumnIndexOrThrow("seanceId")));
+        }
+        c.close();
+        db.close();
+        return list;
+    }
+
+    /**
+     * Supprimer un favori local (optionnel).
+     */
+    public boolean supprimerFavoriLocal(String clientId, String seanceId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        int rows = db.delete("favoris", "clientId=? AND seanceId=?", new String[] { clientId, seanceId });
+        db.close();
+        return rows > 0;
     }
 
 }
