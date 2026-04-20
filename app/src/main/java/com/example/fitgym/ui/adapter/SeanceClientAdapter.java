@@ -152,7 +152,7 @@ public class SeanceClientAdapter extends RecyclerView.Adapter<SeanceClientAdapte
             case "pilates": return R.drawable.pilates;
             case "yoga": return R.drawable.yoga;
             case "stretching": return R.drawable.stretching;
-            case "boxe": return R.drawable.boxe;
+            case "box": return R.drawable.boxe;
             default: return R.drawable.placeholder;
         }
     }

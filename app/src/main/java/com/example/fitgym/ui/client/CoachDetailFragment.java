@@ -24,7 +24,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.fitgym.R;
+
 import com.example.fitgym.data.model.Coach;
+import com.example.fitgym.data.model.Seance;
 import com.example.fitgym.data.repository.DataRepository;
 import com.example.fitgym.ui.adapter.AvisAdapter;
 import com.example.fitgym.ui.adapter.SeanceCoachAdapter;

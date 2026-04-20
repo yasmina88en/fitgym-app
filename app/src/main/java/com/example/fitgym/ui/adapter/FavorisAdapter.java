@@ -187,7 +187,7 @@ public class FavorisAdapter extends RecyclerView.Adapter<FavorisAdapter.VH> {
             case "zumba": return R.drawable.zumba;
             case "crossfit": return R.drawable.crossfit;
             case "cardio": return R.drawable.cardio;
-            case "boxe": return R.drawable.boxe;
+            case "box": return R.drawable.boxe;
             case "stretching": return R.drawable.stretching;
             default: return R.drawable.default_image;
         }

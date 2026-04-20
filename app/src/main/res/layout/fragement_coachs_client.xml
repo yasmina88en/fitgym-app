@@ -92,19 +92,15 @@
                 </LinearLayout>
 
                 <!-- FILTRES DYNAMIQUES -->
-                <HorizontalScrollView
-                    android:layout_width="match_parent"
+                <TextView
+                    android:id="@+id/selectedFilterText"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:scrollbars="none">
-
-                    <com.google.android.material.chip.ChipGroup
-                        android:id="@+id/quickFilterContainer"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        app:chipSpacingHorizontal="8dp"/>
-                </HorizontalScrollView>
+                    android:layout_marginTop="8dp"
+                    android:text="Filtre: Aucun"
+                    android:textColor="@color/purple_500"
+                    android:textStyle="bold"
+                    android:visibility="gone"/>
 
             </LinearLayout>
         </androidx.cardview.widget.CardView>

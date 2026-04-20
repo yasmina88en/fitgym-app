@@ -183,7 +183,7 @@ public class SeanceAdapter extends RecyclerView.Adapter<SeanceAdapter.SeanceView
                 return R.drawable.crossfit;
             case "cardio":
                 return R.drawable.cardio;
-            case "boxe":
+            case "box":
                 return R.drawable.boxe;
             case "stretching":
                 return R.drawable.stretching;

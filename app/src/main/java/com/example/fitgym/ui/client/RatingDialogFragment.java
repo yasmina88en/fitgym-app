@@ -19,6 +19,10 @@ import com.example.fitgym.data.repository.AvisRepository;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -72,7 +76,8 @@ public class RatingDialogFragment extends BottomSheetDialogFragment {
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_rating_dialog, container, false);
     }
 
@@ -139,7 +144,7 @@ public class RatingDialogFragment extends BottomSheetDialogFragment {
                 "🤩 Excellent - Exceptionnel !"
         };
 
-        String[] colors = {"#DC2626", "#EA580C", "#F59E0B", "#10B981", "#059669"};
+        String[] colors = { "#DC2626", "#EA580C", "#F59E0B", "#10B981", "#059669" };
 
         if (selectedRating > 0 && selectedRating <= 5) {
             int index = (int) selectedRating - 1;
@@ -162,7 +167,8 @@ public class RatingDialogFragment extends BottomSheetDialogFragment {
         }
 
         if (commentaire.length() < 10) {
-            Toast.makeText(requireContext(), "✍️ Le commentaire doit avoir au moins 10 caractères", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), "✍️ Le commentaire doit avoir au moins 10 caractères", Toast.LENGTH_SHORT)
+                    .show();
             return;
         }
 
@@ -172,42 +178,78 @@ public class RatingDialogFragment extends BottomSheetDialogFragment {
         }
 
         String clientId = auth.getCurrentUser().getUid();
-        String clientName = auth.getCurrentUser().getDisplayName() != null ?
-                auth.getCurrentUser().getDisplayName() : "Client";
-        String clientPhotoUrl = auth.getCurrentUser().getPhotoUrl() != null ?
-                auth.getCurrentUser().getPhotoUrl().toString() : "";
-
-        Avis avis = new Avis(
-                null,
-                clientId,
-                clientName,
-                commentaire,
-                new SimpleDateFormat("dd/MM/yyyy", Locale.FRENCH).format(new Date()),
-                selectedRating,
-                clientPhotoUrl,
-                System.currentTimeMillis()
-        );
+        String finalCommentaire = commentaire;
 
         btnEnvoyer.setEnabled(false);
         btnEnvoyer.setText("⏳ Envoi en cours...");
 
-        // Utiliser AvisRepository
-        avisRepository.ajouterAvis(clientId, coachId, avis, new AvisRepository.AvisCallback<Void>() {
-            @Override
-            public void onSuccess(Void data) {
-                Toast.makeText(requireContext(), "✅ Avis envoyé avec succès !", Toast.LENGTH_SHORT).show();
-                if (listener != null) {
-                    listener.onRatingSubmitted();
-                }
-                dismiss();
-            }
+        // Récupérer les informations du client depuis la base de données
+        FirebaseDatabase.getInstance().getReference("clients").child(clientId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        String clientName = "Client";
+                        String clientPhotoUrl = "";
 
-            @Override
-            public void onError(String error) {
-                btnEnvoyer.setEnabled(true);
-                btnEnvoyer.setText("Envoyer mon avis");
-                Toast.makeText(requireContext(), "❌ Erreur : " + error, Toast.LENGTH_SHORT).show();
-            }
-        });
+                        if (snapshot.exists()) {
+                            // Essayer de récupérer le nom complet
+                            String nom = snapshot.child("nom").getValue(String.class);
+                            String prenom = snapshot.child("prenom").getValue(String.class);
+
+                            if (nom != null && prenom != null) {
+                                clientName = prenom + " " + nom;
+                            } else if (nom != null) {
+                                clientName = nom;
+                            } else if (prenom != null) {
+                                clientName = prenom;
+                            }
+
+                            // Récupérer la photo
+                            String photo = snapshot.child("photo").getValue(String.class);
+                            if (photo != null && !photo.isEmpty()) {
+                                clientPhotoUrl = photo;
+                            }
+                        }
+
+                        // Créer l'avis avec les informations récupérées
+                        Avis avis = new Avis(
+                                null,
+                                clientId,
+                                clientName,
+                                finalCommentaire,
+                                new SimpleDateFormat("dd/MM/yyyy", Locale.FRENCH).format(new Date()),
+                                selectedRating,
+                                clientPhotoUrl,
+                                System.currentTimeMillis());
+
+                        // Utiliser AvisRepository
+                        avisRepository.ajouterAvis(clientId, coachId, avis, new AvisRepository.AvisCallback<Void>() {
+                            @Override
+                            public void onSuccess(Void data) {
+                                Toast.makeText(requireContext(), "✅ Avis envoyé avec succès !", Toast.LENGTH_SHORT)
+                                        .show();
+                                if (listener != null) {
+                                    listener.onRatingSubmitted();
+                                }
+                                dismiss();
+                            }
+
+                            @Override
+                            public void onError(String error) {
+                                btnEnvoyer.setEnabled(true);
+                                btnEnvoyer.setText("Envoyer mon avis");
+                                Toast.makeText(requireContext(), "❌ Erreur : " + error, Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        btnEnvoyer.setEnabled(true);
+                        btnEnvoyer.setText("Envoyer mon avis");
+                        Toast.makeText(requireContext(), "❌ Erreur de récupération des données", Toast.LENGTH_SHORT)
+                                .show();
+                    }
+                });
     }
 }

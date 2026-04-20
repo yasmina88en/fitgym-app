@@ -1,4 +1,6 @@
-package com.example.fitgym.ui.client;import android.os.Bundle;
+package com.example.fitgym.ui.client;
+
+import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -19,10 +21,11 @@ import com.example.fitgym.R;
 import com.example.fitgym.data.db.FirebaseHelper;
 import com.example.fitgym.data.model.Coach;
 import com.example.fitgym.ui.adapter.CoachAdapter;
-import com.google.android.material.chip.Chip;
-import com.google.android.material.chip.ChipGroup;
 
+import android.widget.TextView;
+import androidx.appcompat.app.AlertDialog;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -32,12 +35,12 @@ public class ListeCoachesFragmentClient extends Fragment implements RatingDialog
     private RecyclerView coachesRecyclerView;
     private EditText searchInput;
     private LinearLayout emptyState;
-    private ChipGroup chipGroupSpecialties;
+    private TextView selectedFilterText;
     private CoachAdapter adapter;
 
     private List<Coach> coachList = new ArrayList<>();
     private List<Coach> filteredList = new ArrayList<>();
-    private Set<String> selectedSpecialties = new HashSet<>();
+    private String selectedSpecialty = null;
 
     private FirebaseHelper firebaseHelper;
 
@@ -48,7 +51,7 @@ public class ListeCoachesFragmentClient extends Fragment implements RatingDialog
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+            @Nullable Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragement_coachs_client, container, false);
 
@@ -56,7 +59,7 @@ public class ListeCoachesFragmentClient extends Fragment implements RatingDialog
         coachesRecyclerView = view.findViewById(R.id.coachesRecyclerView);
         searchInput = view.findViewById(R.id.searchInput);
         emptyState = view.findViewById(R.id.emptyState);
-        chipGroupSpecialties = view.findViewById(R.id.quickFilterContainer);
+        selectedFilterText = view.findViewById(R.id.selectedFilterText);
         ImageButton btnFilter = view.findViewById(R.id.btnFilter);
 
         // Initialisation de FirebaseHelper
@@ -67,24 +70,23 @@ public class ListeCoachesFragmentClient extends Fragment implements RatingDialog
         coachesRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         coachesRecyclerView.setAdapter(adapter);
 
-
         // Gestion de l'affichage des filtres
-        chipGroupSpecialties.setVisibility(View.GONE);
-        btnFilter.setOnClickListener(v -> {
-            if (chipGroupSpecialties.getVisibility() == View.GONE) {
-                chipGroupSpecialties.setVisibility(View.VISIBLE);
-            } else {
-                chipGroupSpecialties.setVisibility(View.GONE);
-            }
-        });
+        btnFilter.setOnClickListener(v -> showFilterDialog());
 
         // Écouteur pour la barre de recherche
         searchInput.addTextChangedListener(new TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
                 applyFilters();
             }
-            @Override public void afterTextChanged(Editable s) {}
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
         });
 
         // Chargement initial des données
@@ -94,25 +96,25 @@ public class ListeCoachesFragmentClient extends Fragment implements RatingDialog
     }
 
     private void loadFirebaseCoaches() {
-        firebaseHelper.getAllCoaches(coachsLoaded -> {
-            if (getContext() == null || !isAdded()) return; // Vérifie que le fragment est toujours actif
+        firebaseHelper.getAllCoaches(coaches -> {
+            if (getContext() == null || !isAdded())
+                return;
 
             coachList.clear();
-            coachList.addAll(coachsLoaded);
+            coachList.addAll(coaches);
 
             if (coachList.isEmpty()) {
                 Log.d("DEBUG_COACHS", "Aucun coach récupéré depuis Firebase !");
             }
 
-            // Mettre à jour les chips de spécialités et appliquer les filtres
-            setupSpecialtyChips();
+            // Appliquer les filtres
             applyFilters();
         });
     }
 
-    private void setupSpecialtyChips() {
-        chipGroupSpecialties.removeAllViews();
-        if (getContext() == null) return;
+    private void showFilterDialog() {
+        if (getContext() == null)
+            return;
 
         // Collecte de toutes les spécialités uniques
         Set<String> specialtiesSet = new HashSet<>();
@@ -122,22 +124,26 @@ public class ListeCoachesFragmentClient extends Fragment implements RatingDialog
             }
         }
 
-        // Création d'une puce (Chip) pour chaque spécialité
-        for (String specialty : specialtiesSet) {
-            Chip chip = new Chip(getContext());
-            chip.setText(specialty);
-            chip.setCheckable(true);
-            chip.setChipBackgroundColorResource(R.color.chip_background);
-            chip.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                if (isChecked) {
-                    selectedSpecialties.add(specialty);
-                } else {
-                    selectedSpecialties.remove(specialty);
-                }
-                applyFilters();
-            });
-            chipGroupSpecialties.addView(chip);
-        }
+        List<String> specialtiesList = new ArrayList<>(specialtiesSet);
+        Collections.sort(specialtiesList);
+        specialtiesList.add(0, "Tout afficher"); // Option pour réinitialiser
+
+        String[] items = specialtiesList.toArray(new String[0]);
+
+        new AlertDialog.Builder(getContext())
+                .setTitle("Choisir une spécialité")
+                .setItems(items, (dialog, which) -> {
+                    if (which == 0) {
+                        selectedSpecialty = null;
+                        selectedFilterText.setVisibility(View.GONE);
+                    } else {
+                        selectedSpecialty = items[which];
+                        selectedFilterText.setText("Filtre: " + selectedSpecialty);
+                        selectedFilterText.setVisibility(View.VISIBLE);
+                    }
+                    applyFilters();
+                })
+                .show();
     }
 
     private void applyFilters() {
@@ -151,9 +157,9 @@ public class ListeCoachesFragmentClient extends Fragment implements RatingDialog
             boolean matchesName = coach.getNom() != null &&
                     coach.getNom().toLowerCase().contains(searchText);
 
-            // Vérifie si le coach a toutes les spécialités sélectionnées
-            boolean matchesSpecialty = selectedSpecialties.isEmpty() ||
-                    (coach.getSpecialites() != null && coach.getSpecialites().containsAll(selectedSpecialties));
+            // Vérifie si le coach a la spécialité sélectionnée
+            boolean matchesSpecialty = selectedSpecialty == null ||
+                    (coach.getSpecialites() != null && coach.getSpecialites().contains(selectedSpecialty));
 
             if (matchesName && matchesSpecialty) {
                 tempList.add(coach);

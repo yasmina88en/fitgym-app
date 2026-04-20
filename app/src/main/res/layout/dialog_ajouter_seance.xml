@@ -39,6 +39,20 @@
             android:padding="8dp"
             android:layout_marginTop="12dp"/>
 
+        <!-- Label Coach -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Coach"
+            android:textStyle="bold"
+            android:textColor="#444444"
+            android:layout_marginTop="10dp"/>
+
+        <Spinner
+            android:id="@+id/spinnerCoach"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"/>
+
         <!-- Label Catégorie -->
         <TextView
             android:layout_width="wrap_content"
@@ -53,19 +67,7 @@
             android:layout_width="match_parent"
             android:layout_height="48dp"/>
 
-        <!-- Label Coach -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Coach"
-            android:textStyle="bold"
-            android:textColor="#444444"
-            android:layout_marginTop="10dp"/>
 
-        <Spinner
-            android:id="@+id/spinnerCoach"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"/>
 
         <!-- Label Niveau -->
         <TextView

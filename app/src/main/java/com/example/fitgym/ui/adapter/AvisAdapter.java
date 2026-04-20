@@ -1,6 +1,10 @@
 package com.example.fitgym.ui.adapter;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.util.Base64;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -39,9 +43,13 @@ public class AvisAdapter extends RecyclerView.Adapter<AvisAdapter.AvisViewHolder
     public void onBindViewHolder(@NonNull AvisViewHolder holder, int position) {
         Map<String, Object> avis = avisList.get(position);
 
+        // Log pour debug
+        Log.d("AvisAdapter", "Avis data: " + avis.toString());
+
         // Nom client
         String nomClient = (String) avis.getOrDefault("nomClient", "Anonyme");
         holder.nomClient.setText(nomClient);
+        Log.d("AvisAdapter", "Client name: " + nomClient);
 
         // Commentaire
         String commentaire = (String) avis.getOrDefault("commentaire", "");
@@ -51,13 +59,40 @@ public class AvisAdapter extends RecyclerView.Adapter<AvisAdapter.AvisViewHolder
         String date = (String) avis.getOrDefault("date", "");
         holder.dateAvis.setText(date);
 
-        // Avatar
+        // Avatar - Support pour Base64 et URLs
         String avatarUrl = (String) avis.getOrDefault("avatarUrl", "");
+        Log.d("AvisAdapter", "Avatar URL: "
+                + (avatarUrl != null ? avatarUrl.substring(0, Math.min(50, avatarUrl.length())) : "null"));
+
         if (avatarUrl != null && !avatarUrl.isEmpty()) {
-            Glide.with(context)
-                    .load(avatarUrl)
-                    .placeholder(R.drawable.avatar_placeholder)
-                    .into(holder.avatarClient);
+            if (avatarUrl.startsWith("data:image") || avatarUrl.length() > 500) {
+                // C'est une image Base64
+                try {
+                    String base64Image = avatarUrl;
+                    if (base64Image.contains(",")) {
+                        base64Image = base64Image.substring(base64Image.indexOf(",") + 1);
+                    }
+                    byte[] decodedBytes = Base64.decode(base64Image, Base64.DEFAULT);
+                    Bitmap bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length);
+                    if (bitmap != null) {
+                        holder.avatarClient.setImageBitmap(bitmap);
+                    } else {
+                        holder.avatarClient.setImageResource(R.drawable.avatar_placeholder);
+                    }
+                } catch (Exception e) {
+                    Log.e("AvisAdapter", "Erreur décodage Base64: " + e.getMessage());
+                    holder.avatarClient.setImageResource(R.drawable.avatar_placeholder);
+                }
+            } else {
+                // C'est une URL classique
+                Glide.with(context)
+                        .load(avatarUrl)
+                        .placeholder(R.drawable.avatar_placeholder)
+                        .error(R.drawable.avatar_placeholder)
+                        .into(holder.avatarClient);
+            }
+        } else {
+            holder.avatarClient.setImageResource(R.drawable.avatar_placeholder);
         }
 
         // Rating/Étoiles

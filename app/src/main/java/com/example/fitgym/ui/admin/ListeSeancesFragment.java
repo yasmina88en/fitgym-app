@@ -160,8 +160,8 @@ public class ListeSeancesFragment extends Fragment {
     }
 
     // ---------------------------
-    // DIALOG Ajouter
-    // ---------------------------
+// DIALOG Ajouter (remplacer l'ancienne méthode)
+// ---------------------------
     private void showDialogAjouterSeance() {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         View vue = getLayoutInflater().inflate(R.layout.dialog_ajouter_seance, null);
@@ -183,22 +183,26 @@ public class ListeSeancesFragment extends Fragment {
         MaterialButton btnAnnuler = vue.findViewById(R.id.btnAnnuler);
         MaterialButton btnAjouter = vue.findViewById(R.id.btnAjouter);
 
-        // remplir catégories localement
+        // récupérer listes locales
         List<Categorie> cats = databaseHelper.getAllCategories();
-        List<String> nomsCats = new ArrayList<>();
-        nomsCats.add("Aucune");
-        for (Categorie c : cats) nomsCats.add(c.getNom() != null ? c.getNom() : c.getCategorieId());
-        ArrayAdapter<String> adapterCats = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, nomsCats);
-        adapterCats.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerCategorie.setAdapter(adapterCats);
+        if (cats == null) cats = new ArrayList<>();
+        List<Categorie> allCategories = new ArrayList<>(cats);
+
+        // remplir spinnerCategorie initialement (Toutes/Aucune)
+        setCategoriesIntoSpinner(spinnerCategorie, allCategories);
 
         // remplir coaches via DAOCoach
         DAOCoach daoCoach = new DAOCoach(databaseHelper.getWritableDatabase());
         List<com.example.fitgym.data.model.Coach> coaches = daoCoach.listerCoachs();
+        if (coaches == null) coaches = new ArrayList<>();
+        // nettoyer coaches invalides
         coaches.removeIf(c -> c.getId() == null || c.getId().trim().isEmpty());
+        List<com.example.fitgym.data.model.Coach> allCoaches = new ArrayList<>(coaches);
+
+        // Build coach names
         List<String> nomsCoachs = new ArrayList<>();
         nomsCoachs.add("Aucun");
-        for (com.example.fitgym.data.model.Coach c : coaches) nomsCoachs.add(c.getNom() != null ? c.getNom() : c.getId());
+        for (com.example.fitgym.data.model.Coach c : allCoaches) nomsCoachs.add(c.getNom() != null ? c.getNom() : c.getId());
         ArrayAdapter<String> adapterCoachs = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, nomsCoachs);
         adapterCoachs.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerCoach.setAdapter(adapterCoachs);
@@ -211,6 +215,21 @@ public class ListeSeancesFragment extends Fragment {
 
         // date/time pickers
         attachDateTimePickers(editDate, editHeure);
+
+        // Quand on choisit un coach -> filtrer catégories selon ses spécialités (noms)
+        spinnerCoach.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
+                if (position <= 0) {
+                    // "Aucun" selected -> afficher toutes les catégories
+                    setCategoriesIntoSpinner(spinnerCategorie, allCategories);
+                } else {
+                    com.example.fitgym.data.model.Coach selectedCoach = allCoaches.get(position - 1);
+                    refreshCategorieSpinnerForCoach(selectedCoach, allCategories, spinnerCategorie);
+                }
+            }
+            @Override public void onNothingSelected(android.widget.AdapterView<?> parent) {}
+        });
 
         btnAnnuler.setOnClickListener(v -> dialog.dismiss());
 
@@ -227,13 +246,24 @@ public class ListeSeancesFragment extends Fragment {
             int placesDisp = parseIntSafe(editPlacesDisponibles.getText().toString().trim());
             String description = editDescription.getText().toString().trim();
 
+            // déterminer categorieId depuis spinnerCategorie (adapter contient "Aucune" + noms)
             String categorieId = null;
             int selCat = spinnerCategorie.getSelectedItemPosition();
-            if (selCat > 0 && selCat <= cats.size()) categorieId = cats.get(selCat - 1).getCategorieId();
+            if (selCat > 0) {
+                String catNom = (String) spinnerCategorie.getSelectedItem();
+                // chercher la categorie par nom (insensible casse)
+                for (Categorie c : allCategories) {
+                    if (c.getNom() != null && c.getNom().equalsIgnoreCase(catNom)) {
+                        categorieId = c.getCategorieId();
+                        break;
+                    }
+                }
+            }
 
+            // déterminer coachId depuis spinnerCoach
             String coachId = null;
             int selCoach = spinnerCoach.getSelectedItemPosition();
-            if (selCoach > 0 && selCoach <= coaches.size()) coachId = coaches.get(selCoach - 1).getId();
+            if (selCoach > 0 && selCoach <= allCoaches.size()) coachId = allCoaches.get(selCoach - 1).getId();
 
             Seance s = new Seance();
             s.setTitre(titre);
@@ -255,10 +285,9 @@ public class ListeSeancesFragment extends Fragment {
 
         dialog.show();
     }
-
     // ---------------------------
-    // DIALOG Modifier (utilise dialog_modifier_seance.xml)
-    // ---------------------------
+// DIALOG Modifier (remplacer l'ancienne méthode)
+// ---------------------------
     private void showDialogModifierSeance(@Nullable Seance seance) {
         if (seance == null) return;
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
@@ -281,22 +310,25 @@ public class ListeSeancesFragment extends Fragment {
         MaterialButton btnAnnuler = vue.findViewById(R.id.btnAnnuler);
         MaterialButton btnModifier = vue.findViewById(R.id.btnModifier);
 
-        // remplir catégories localement
+        // récupérer listes locales
         List<Categorie> cats = databaseHelper.getAllCategories();
-        List<String> nomsCats = new ArrayList<>();
-        nomsCats.add("Aucune");
-        for (Categorie c : cats) nomsCats.add(c.getNom() != null ? c.getNom() : c.getCategorieId());
-        ArrayAdapter<String> adapterCats = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, nomsCats);
-        adapterCats.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerCategorie.setAdapter(adapterCats);
+        if (cats == null) cats = new ArrayList<>();
+        List<Categorie> allCategories = new ArrayList<>(cats);
+
+        // remplir spinnerCategorie initialement avec toutes (sera filtré plus bas)
+        setCategoriesIntoSpinner(spinnerCategorie, allCategories);
 
         // remplir coaches via DAOCoach
         DAOCoach daoCoach = new DAOCoach(databaseHelper.getWritableDatabase());
         List<com.example.fitgym.data.model.Coach> coaches = daoCoach.listerCoachs();
+        if (coaches == null) coaches = new ArrayList<>();
         coaches.removeIf(c -> c.getId() == null || c.getId().trim().isEmpty());
+        List<com.example.fitgym.data.model.Coach> allCoaches = new ArrayList<>(coaches);
+
+        // Build coach names
         List<String> nomsCoachs = new ArrayList<>();
         nomsCoachs.add("Aucun");
-        for (com.example.fitgym.data.model.Coach c : coaches) nomsCoachs.add(c.getNom() != null ? c.getNom() : c.getId());
+        for (com.example.fitgym.data.model.Coach c : allCoaches) nomsCoachs.add(c.getNom() != null ? c.getNom() : c.getId());
         ArrayAdapter<String> adapterCoachs = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, nomsCoachs);
         adapterCoachs.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerCoach.setAdapter(adapterCoachs);
@@ -307,7 +339,7 @@ public class ListeSeancesFragment extends Fragment {
         adapterNiv.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerNiveau.setAdapter(adapterNiv);
 
-        // pré-remplir valeurs
+        // pré-remplir valeurs texte/date/heure
         editTitre.setText(seance.getTitre());
         editDate.setText(seance.getDate());
         editHeure.setText(seance.getHeure());
@@ -317,24 +349,62 @@ public class ListeSeancesFragment extends Fragment {
         editPlacesDisponibles.setText(String.valueOf(seance.getPlacesDisponibles()));
         editDescription.setText(seance.getDescription());
 
-        // sélectionner catégorie
-        if (seance.getCategorieId() != null) {
-            for (int i = 0; i < cats.size(); i++) {
-                if (cats.get(i).getCategorieId().equals(seance.getCategorieId())) {
-                    spinnerCategorie.setSelection(i + 1);
-                    break;
+        // Quand on choisit un coach -> filtrer catégories (même listener que ajout)
+        spinnerCoach.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
+                if (position <= 0) {
+                    setCategoriesIntoSpinner(spinnerCategorie, allCategories);
+                } else {
+                    com.example.fitgym.data.model.Coach selectedCoach = allCoaches.get(position - 1);
+                    refreshCategorieSpinnerForCoach(selectedCoach, allCategories, spinnerCategorie);
                 }
             }
-        }
-        // sélectionner coach
+            @Override public void onNothingSelected(android.widget.AdapterView<?> parent) {}
+        });
+
+        // sélectionner coach courant (si défini) — ceci déclenchera le listener et filtrera le spinnerCategorie
         if (seance.getCoachId() != null && !seance.getCoachId().isEmpty()) {
-            for (int i = 0; i < coaches.size(); i++) {
-                if (coaches.get(i).getId().equals(seance.getCoachId())) {
+            for (int i = 0; i < allCoaches.size(); i++) {
+                if (allCoaches.get(i).getId().equals(seance.getCoachId())) {
                     spinnerCoach.setSelection(i + 1);
                     break;
                 }
             }
+        } else {
+            // pas de coach : laisser "Aucun" et afficher toutes catégories
+            setCategoriesIntoSpinner(spinnerCategorie, allCategories);
         }
+
+        // attendre que spinnerCategorie soit rempli/filtré puis sélectionner la catégorie existante
+        // -------- CORRECTION : sélection automatique de la catégorie --------
+        String categorieInitialeId = seance.getCategorieId();
+
+// On va attendre que le spinnerCoach finisse de filtrer la liste
+        spinnerCoach.post(() -> {
+            Categorie catInitiale = databaseHelper.getCategorieById(categorieInitialeId);
+            if (catInitiale == null) return;
+            String nomCatInitiale = catInitiale.getNom();
+            if (nomCatInitiale == null) return;
+
+            ArrayAdapter adapterCat = (ArrayAdapter) spinnerCategorie.getAdapter();
+            if (adapterCat == null) return;
+
+            int pos = -1;
+            for (int i = 0; i < adapterCat.getCount(); i++) {
+                Object item = adapterCat.getItem(i);
+                if (item != null && item.toString().equalsIgnoreCase(nomCatInitiale)) {
+                    pos = i;
+                    break;
+                }
+            }
+
+            if (pos >= 0) {
+                spinnerCategorie.setSelection(pos);
+            }
+        });
+
+
         // niveau
         for (int i = 0; i < niveaux.length; i++) {
             if (niveaux[i].equalsIgnoreCase(seance.getNiveau())) {
@@ -363,11 +433,19 @@ public class ListeSeancesFragment extends Fragment {
 
             String categorieId = null;
             int selCat = spinnerCategorie.getSelectedItemPosition();
-            if (selCat > 0 && selCat <= cats.size()) categorieId = cats.get(selCat - 1).getCategorieId();
+            if (selCat > 0) {
+                String catNom = (String) spinnerCategorie.getSelectedItem();
+                for (Categorie c : allCategories) {
+                    if (c.getNom() != null && c.getNom().equalsIgnoreCase(catNom)) {
+                        categorieId = c.getCategorieId();
+                        break;
+                    }
+                }
+            }
 
             String coachId = null;
             int selCoach = spinnerCoach.getSelectedItemPosition();
-            if (selCoach > 0 && selCoach <= coaches.size()) coachId = coaches.get(selCoach - 1).getId();
+            if (selCoach > 0 && selCoach <= allCoaches.size()) coachId = allCoaches.get(selCoach - 1).getId();
 
             seance.setTitre(titre);
             seance.setNiveau(niveauSel);
@@ -437,4 +515,52 @@ public class ListeSeancesFragment extends Fragment {
                 .setNegativeButton("Annuler", (dialog, which) -> dialog.dismiss())
                 .show();
     }
+    // Remplit spinner avec "Aucune" + toutes les catégories fournies (affiche noms)
+    private void setCategoriesIntoSpinner(Spinner spinner, List<Categorie> categories) {
+        List<String> noms = new ArrayList<>();
+        noms.add("Aucune");
+        for (Categorie c : categories) noms.add(c.getNom() != null ? c.getNom() : c.getCategorieId());
+        ArrayAdapter<String> adapterSpinner = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, noms);
+        adapterSpinner.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapterSpinner);
+    }
+
+    // Filtre les categories selon coach.getSpecialites() (specialites contient des noms de catégories).
+    private void refreshCategorieSpinnerForCoach(com.example.fitgym.data.model.Coach coach,
+                                                 List<Categorie> allCategories,
+                                                 Spinner spinnerCategorie) {
+        List<String> specs = coach.getSpecialites();
+        if (specs == null || specs.isEmpty()) {
+            // aucun filtre -> afficher toutes
+            setCategoriesIntoSpinner(spinnerCategorie, allCategories);
+            return;
+        }
+
+        // normaliser spécialités (minuscules)
+        List<String> specsNorm = new ArrayList<>();
+        for (String s : specs) if (s != null) specsNorm.add(s.trim().toLowerCase());
+
+        List<Categorie> filtered = new ArrayList<>();
+        for (Categorie cat : allCategories) {
+            String catNom = cat.getNom() != null ? cat.getNom().trim().toLowerCase() : null;
+            if (catNom != null && specsNorm.contains(catNom)) {
+                filtered.add(cat);
+            }
+        }
+
+        if (filtered.isEmpty()) {
+            // si aucune correspondance, afficher toutes (ou tu peux afficher vide selon ton choix)
+            setCategoriesIntoSpinner(spinnerCategorie, allCategories);
+            return;
+        }
+
+        // remplir spinner avec filtered
+        List<String> noms = new ArrayList<>();
+        noms.add("Aucune");
+        for (Categorie c : filtered) noms.add(c.getNom() != null ? c.getNom() : c.getCategorieId());
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, noms);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerCategorie.setAdapter(adapter);
+    }
+
 }
